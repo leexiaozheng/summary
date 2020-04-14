@@ -783,20 +783,20 @@ var VNode = function VNode (
   componentOptions,
   asyncFactory
 ) {
-  this.tag = tag;
-  this.data = data;
-  this.children = children;// 创建原生标签节点实例时保存的子节点
-  this.text = text;
-  this.elm = elm;
+  this.tag = tag;// 标签名
+  this.data = data;// 节点数据,包括节点的生命周期函数
+  this.children = children;// 当节点是原生标签节点，保存它的子节点
+  this.text = text;// 为文本节点或者注释节点时的文本内容
+  this.elm = elm;// 节点对应的DOM，组件节点则对应的是该组件内原生根标签DOM
   this.ns = undefined;
-  this.context = context;
+  this.context = context;// 节点对应的组件
   this.fnContext = undefined;
   this.fnOptions = undefined;
   this.fnScopeId = undefined;
-  this.key = data && data.key;
-  this.componentOptions = componentOptions;// 缓存组件标签信息，包括组件名称，组件选项、标签上的props、标签上的事件、以及子节点。
-  this.componentInstance = undefined;
-  this.parent = undefined;
+  this.key = data && data.key;// key值
+  this.componentOptions = componentOptions;// 缓存组件标签信息：包括组件名称，组件选项、标签上的props、标签上的事件、以及组件标签内的子节点。
+  this.componentInstance = undefined;// 组件标签节点对应的组件（Vue实例）
+  this.parent = undefined;// 当节点是组件内根标签节点，保存它的组件标签节点
   this.raw = false;
   this.isStatic = false;
   this.isRootInsert = true;
@@ -3204,13 +3204,13 @@ var componentVNodeHooks = {
     }
   },
 
-  destroy: function destroy (vnode) {
+  destroy: function destroy (vnode) {// 节点销毁生命周期函数
     var componentInstance = vnode.componentInstance;
     if (!componentInstance._isDestroyed) {
-      if (!vnode.data.keepAlive) {
+      if (!vnode.data.keepAlive) {// 是不是keep-alive中的缓存组件
         componentInstance.$destroy();
       } else {
-        deactivateChildComponent(componentInstance, true /* direct */);
+        deactivateChildComponent(componentInstance, true /* direct */);// 
       }
     }
   }
@@ -3408,7 +3408,7 @@ function createElement (
 function _createElement (
   context,
   tag,
-  data, //事件 { on: {test: function } }, 属性 attrs:{"name":value}
+  data, //事件 { on: {test: function } }, 属性 attrs: {"name":value}
   children,
   normalizationType
 ) {
@@ -3583,7 +3583,7 @@ function renderMixin (Vue) {
 
     // set parent vnode. this allows render functions to have access
     // to the data on the placeholder node.
-    vm.$vnode = _parentVnode;
+    vm.$vnode = _parentVnode;// 组件标签节点
     // render self
     var vnode;
     try {
@@ -3625,7 +3625,7 @@ function renderMixin (Vue) {
       }
       vnode = createEmptyVNode();
     }
-    // set parent,设置组件根VNode实例的parent为组件VNode实例。
+    // set parent,设置组件内根标签节点的parent为组件标签节点。
     vnode.parent = _parentVnode;
     return vnode
   };
@@ -3984,17 +3984,17 @@ function lifecycleMixin (Vue) {
   Vue.prototype._update = function (vnode, hydrating) {
     var vm = this;
     var prevEl = vm.$el;
-    var prevVnode = vm._vnode;// 组件首次加载时无_vnode
+    var prevVnode = vm._vnode;
     var restoreActiveInstance = setActiveInstance(vm);
-    vm._vnode = vnode;// 组件templates生成的vnode
+    vm._vnode = vnode;// 组件内标签节点
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
-    if (!prevVnode) {
+    if (!prevVnode) {// 组件初次渲染
       // initial render
-      vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */);// 将patch后组件根元素赋值给实例的$el属性
+      vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */);// 将patch后组件根元素赋值给组件的$el属性
     } else {
       // updates
-      vm.$el = vm.__patch__(prevVnode, vnode);
+      vm.$el = vm.__patch__(prevVnode, vnode);// 将patch后组件根元素赋值给组件的$el属性
     }
     restoreActiveInstance();
     // update __vue__ reference
@@ -4005,7 +4005,7 @@ function lifecycleMixin (Vue) {
       vm.$el.__vue__ = vm;
     }
     // if parent is an HOC, update its $el as well
-    if (vm.$vnode && vm.$parent && vm.$vnode === vm.$parent._vnode) {// 组件标签是根标签
+    if (vm.$vnode && vm.$parent && vm.$vnode === vm.$parent._vnode) {// vm.$vnode是组件标签节点,vm.$parent非抽象父组件。当组件标签是根标签，保持父组件和当前组件的$el一致
       vm.$parent.$el = vm.$el;
     }
     // updated hook is called by the scheduler to ensure that children are
@@ -4242,7 +4242,7 @@ function activateChildComponent (vm, direct) {
   }
 }
 
-function deactivateChildComponent (vm, direct) {
+function deactivateChildComponent (vm, direct) {// 冻结组件
   if (direct) {
     vm._directInactive = true;
     if (isInInactiveTree(vm)) {
@@ -4706,7 +4706,7 @@ function initState (vm) {
 
 // 初始化props，设置props属性值
 function initProps (vm, propsOptions) {
-  var propsData = vm.$options.propsData || {};//组件的属性值
+  var propsData = vm.$options.propsData || {};//组件标签上props
   var props = vm._props = {};
   // cache prop keys so that future props updates can iterate using Array
   // instead of dynamic object key enumeration.
@@ -4718,7 +4718,7 @@ function initProps (vm, propsOptions) {
   }
   var loop = function ( key ) {
     keys.push(key);
-    var value = validateProp(key, propsOptions, propsData, vm);// 获取属性值
+    var value = validateProp(key, propsOptions, propsData, vm);// 根据组件标签上的prop获取对应的值
     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
       var hyphenatedKey = hyphenate(key);
@@ -4729,7 +4729,7 @@ function initProps (vm, propsOptions) {
           vm
         );
       }
-      defineReactive$$1(props, key, value, function () {
+      defineReactive$$1(props, key, value, function () {// 设置prop响应式
         if (!isRoot && !isUpdatingChildComponent) {
           warn(
             "Avoid mutating a prop directly since the value will be " +
@@ -4747,7 +4747,7 @@ function initProps (vm, propsOptions) {
     // during Vue.extend(). We only need to proxy props defined at
     // instantiation here.？
     if (!(key in vm)) {
-      proxy(vm, "_props", key);//组件实例代理属性值
+      proxy(vm, "_props", key);// props挂载到组件上
     }
   };
 
@@ -5064,7 +5064,7 @@ function initMixin (Vue) {
       measure(("vue " + (vm._name) + " init"), startTag, endTag);
     }
 
-    if (vm.$options.el) {
+    if (vm.$options.el) {// 根组件存在el值
       vm.$mount(vm.$options.el);
     }
   };
@@ -5417,7 +5417,7 @@ var KeepAlive = {
         cache[key] = vnode;
         keys.push(key);
         // prune oldest entry
-        if (this.max && keys.length > parseInt(this.max)) {// 超出最大数量限制，销毁最先换成的节点实例(max为字符串时会报错)，存在缺陷
+        if (this.max && keys.length > parseInt(this.max)) {// 超出最大数量限制，销毁最先换成的节点实例(max为字符串0时会报错)
           pruneCacheEntry(cache, keys[0], keys, this._vnode);
         }
       }
@@ -6051,7 +6051,7 @@ function createPatchFunction (backend) {
       insertedVnodeQueue.push.apply(insertedVnodeQueue, vnode.data.pendingInsert);
       vnode.data.pendingInsert = null;
     }
-    vnode.elm = vnode.componentInstance.$el;
+    vnode.elm = vnode.componentInstance.$el;// 保持组件节点和组件内原生根标签节点指向的DOM一致
     if (isPatchable(vnode)) {
       invokeCreateHooks(vnode, insertedVnodeQueue);
       setScope(vnode);
@@ -6165,7 +6165,7 @@ function createPatchFunction (backend) {
     var i, j;
     var data = vnode.data;
     if (isDef(data)) {
-      if (isDef(i = data.hook) && isDef(i = i.destroy)) { i(vnode); }
+      if (isDef(i = data.hook) && isDef(i = i.destroy)) { i(vnode); }// 调用节点销毁周期函数
       for (i = 0; i < cbs.destroy.length; ++i) { cbs.destroy[i](vnode); }
     }
     if (isDef(i = vnode.children)) {
@@ -6527,9 +6527,9 @@ function createPatchFunction (backend) {
     var isInitialPatch = false;
     var insertedVnodeQueue = [];
 
-    if (isUndef(oldVnode)) {
+    if (isUndef(oldVnode)) {// 组件初次渲染
       // empty mount (likely as component), create new root element
-      isInitialPatch = true;// 组件初始加载
+      isInitialPatch = true;
       createElm(vnode, insertedVnodeQueue);
     } else {
       var isRealElement = isDef(oldVnode.nodeType);
@@ -6581,14 +6581,14 @@ function createPatchFunction (backend) {
         );
 
         // update parent placeholder node element, recursively
-        if (isDef(vnode.parent)) {
+        if (isDef(vnode.parent)) {// 如果是组件内根标签节点
           var ancestor = vnode.parent;
           var patchable = isPatchable(vnode);
           while (ancestor) {
             for (var i = 0; i < cbs.destroy.length; ++i) {
               cbs.destroy[i](ancestor);
             }
-            ancestor.elm = vnode.elm;
+            ancestor.elm = vnode.elm;// 如果节点是组件内根标签节点，则保持该组件节点和根标签节点的elm一致
             if (patchable) {
               for (var i$1 = 0; i$1 < cbs.create.length; ++i$1) {
                 cbs.create[i$1](emptyNode, ancestor);
