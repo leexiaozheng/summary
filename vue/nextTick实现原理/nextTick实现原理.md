@@ -1,4 +1,4 @@
-1. 
+1.`nextTick`执行时，会将回调函数添加到数组中，当没有微任务时(`panding = false`)则通过调用`timerFunc`创建微任务。微任务会在宏任务完成之后执行(解释为什么更改数据之后不会立即更新页面)。微任务中会调用`flushCallbacks`，设置`pending`为`true`，表示微任务正在执行，下次nextTick需要重新创建微任务，然后依次执行之前收集的回调函数。
 
 ```javascript
 var callbacks = [];// 微任务中将会调用的方法集合
@@ -8,7 +8,7 @@ var timerFunc;// 创建微任务的函数
 ```javascript
 function nextTick (cb, ctx) {
   var _resolve;
-  callbacks.push(function () {
+  callbacks.push(function () {// 将回到函数添加到数组中，将会在微任务中执行
     if (cb) {
       try {
         cb.call(ctx);
@@ -19,28 +19,17 @@ function nextTick (cb, ctx) {
       _resolve(ctx);
     }
   });
-  if (!pending) {// 微任务
+  if (!pending) {// 无微任务
     pending = true;
     timerFunc();// 创建微任务
   }
-  // $flow-disable-line
-  if (!cb && typeof Promise !== 'undefined') {
-    return new Promise(function (resolve) {
-      _resolve = resolve;
-    })
-  }
+  ...
 }
 ```
 ```javascript
 var p = Promise.resolve();
 timerFunc = function () {
-    p.then(flushCallbacks);// 执行微任务，调用之前收集的方法
-    // In problematic UIWebViews, Promise.then doesn't completely break, but
-    // it can get stuck in a weird state where callbacks are pushed into the
-    // microtask queue but the queue isn't being flushed, until the browser
-    // needs to do some other work, e.g. handle a timer. Therefore we can
-    // "force" the microtask queue to be flushed by adding an empty timer.
-    if (isIOS) { setTimeout(noop); }
+    p.then(flushCallbacks);// 创建微任务，微任务中调用之前收集的回调函数
 };
 ```
 ```javascript
@@ -49,19 +38,20 @@ function flushCallbacks () {
   var copies = callbacks.slice(0);
   callbacks.length = 0;
   for (var i = 0; i < copies.length; i++) {
-    copies[i]();
+    copies[i]();// 依次执行回调函数
   }
 }
 ```
-2. 
+
+2.更新页面的回调函数也会在微任务中执行。观察者（Watcher实例）会添加到单独的数组中，在flushSchedulerQueue函数中依次调用数组中观察者的更新方法，flushSchedulerQueue函数会通过nextTick添加到微任务执行的数组中，将会在微任务中执行。观察者添加到数组时，通过`flushing`判断数组中观察者的方法是否已经开始执行，如果未执行（`flushing = false`）直接添加到数组中，否则将当前观察者添加到正在执行的观察者的后面，且要当前观察者的id正好大于前面观察者的id。所以当前观察者也会在本次微任务中执行。
 
 ```javascript
 ar MAX_UPDATE_COUNT = 100;
 var queue = [];// 微任务中将会执行更新操作的watcher集合
 var activatedChildren = [];
-var has = {};
+var has = {};// 标识尚未执行的watcher,如果已经执行就可以继续添加
 var circular = {};
-var waiting = false;// 是否将内部执行watcher更新方法的函数添加到nextTick的微任务中
+var waiting = false;// 是否将内部执行watcher更新方法的函数（flushSchedulerQueue）添加到nextTick的微任务中
 var flushing = false;// 是否正在执行watcher的更新操作
 var index = 0;// 正在执行更新方法的watcher所在队列中的索引
 ```
@@ -95,6 +85,7 @@ function queueWatcher (watcher) {
   }
 }
 ```
+3.在flushSchedulerQueue函数中，设置`flushing = true`，表示已经开始执行收集的观察者的更新方法，首先将观察者根据id从小到大进行排序，然后调用更新方法（`watcher.run`），保证先调用父级的观察者的更新方法，再调用子级的观察者的更新方法。
 
 ```javascript
 function flushSchedulerQueue () {
@@ -121,22 +112,8 @@ function flushSchedulerQueue () {
     }
     id = watcher.id;
     has[id] = null;// watcher方法已经进入执行，可以继续添加该watcher
-    watcher.run();
-    // in dev build, check and stop circular updates.
-    if (process.env.NODE_ENV !== 'production' && has[id] != null) {
-      circular[id] = (circular[id] || 0) + 1;
-      if (circular[id] > MAX_UPDATE_COUNT) {
-        warn(
-          'You may have an infinite update loop ' + (
-            watcher.user
-              ? ("in watcher with expression \"" + (watcher.expression) + "\"")
-              : "in a component render function."
-          ),
-          watcher.vm
-        );
-        break
-      }
-    }
+    watcher.run();// 执行观察者的更新方法
+    ...
   }
 
   // keep copies of post queues before resetting state
