@@ -1,4 +1,4 @@
-1. 每个watch属性会创建观察者（Watcher实例）,根据属性名(person.name)生成获取属性值的方法并赋值给getter。然后调用该方法，读取watch监听的值，读取监听值时，将该观察者添加到值的依赖收集器中。
+1. 每个watch属性会创建观察者（Watcher实例）,根据属性名(例如`person.name`)生成获取属性值的方法并保存在观察者的getter变量上，属性值变化后的调用函数也会被保存在观察者的cb变量上。观察者初始化时调用getter函数，读取watch监听的数据（响应式数据），通过数据属性定义的get将观察者添加到值的依赖收集器中。
 
 ```javascript
 var Watcher = function Watcher (
@@ -15,7 +15,7 @@ var Watcher = function Watcher (
   if (typeof expOrFn === 'function') {
     this.getter = expOrFn;
   } else {
-    this.getter = parsePath(expOrFn);
+    this.getter = parsePath(expOrFn);// 根据属性名生成获取属性值的方法
     ...
   }
   this.value = this.lazy
@@ -25,6 +25,7 @@ var Watcher = function Watcher (
 ```
 
 ```javascript
+// 解析属性名
 function parsePath (path) {
   if (bailRE.test(path)) {
     return
@@ -40,7 +41,7 @@ function parsePath (path) {
 }
 ```
 
-2. 当监听值发生变化时，将调用收集的watch观察者的更新方法，执行`queueWatcher(this)`，将观察者添加到队列中，在`nextTick`中执行观察者的cb方法（watch属性对应的函数）。
+2. 当监听值发生变化时，将调用收集的watch观察者的更新方法，执行`queueWatcher(this)`，将观察者添加到队列（微任务）中，在`nextTick`中执行观察者的cb方法（watch属性值变化后的调用函数）。
 
 ```javascript
 Watcher.prototype.update = function update () {
@@ -50,7 +51,7 @@ Watcher.prototype.update = function update () {
   } else if (this.sync) {
     this.run();
   } else {
-    queueWatcher(this);
+    queueWatcher(this);//
   }
 };
 ```
@@ -61,7 +62,7 @@ function queueWatcher (watcher) {
   if (has[id] == null) {
     has[id] = true;
     if (!flushing) {// 处于收集watcher状态，未执行watcher方法
-      queue.push(watcher);
+      queue.push(watcher);// 将
     } else {// 正在执行搜集的watcher的更新方法
       // if already flushing, splice the watcher based on its id
       // if already past its id, it will be run next immediately.
