@@ -1,4 +1,4 @@
-1.`nextTick`执行时，会将回调函数添加到数组中，当没有微任务时(`panding = false`)则通过调用`timerFunc`创建微任务。微任务会在宏任务完成之后执行(解释为什么更改数据之后不会立即更新页面)。微任务中会调用`flushCallbacks`，设置`pending`为`true`，表示微任务正在执行，下次nextTick需要重新创建微任务，然后依次执行之前收集的回调函数。
+1.`nextTick`执行时，会将回调函数添加到数组中。当没有微任务(microtask)时，即`panding`为`false`,则通过调用`timerFunc`创建微任务。微任务会在宏任务（task）完成之后执行(解释为什么更改数据之后不会立即更新页面)。微任务中会调用`flushCallbacks`，设置`pending`为`true`，表示微任务正在执行，下次`nextTick`需要重新创建微任务，然后依次执行之前收集的回调函数。
 
 ```javascript
 var callbacks = [];// 微任务中将会调用的方法集合
@@ -43,7 +43,21 @@ function flushCallbacks () {
 }
 ```
 
-2.更新页面的回调函数也会在微任务中执行。观察者（Watcher实例）会添加到单独的数组中，在flushSchedulerQueue函数中依次调用数组中观察者的更新方法，flushSchedulerQueue函数会通过nextTick添加到微任务执行的数组中，将会在微任务中执行。观察者添加到数组时，通过`flushing`判断数组中观察者的方法是否已经开始执行，如果未执行（`flushing = false`）直接添加到数组中，否则将当前观察者添加到正在执行的观察者的后面，且要当前观察者的id正好大于前面观察者的id。所以当前观察者也会在本次微任务中执行。
+2.更新页面的回调函数也会在微任务中执行。数据发生变化，通知观察者更新，观察者接收到通知后并不会立即更新（`lazy`和`sync`默认为`false`，表示既不是懒执行也不是同步执行），而是调用`queueWatcher`将观察者（`Watcher`实例）添加到单独的数组（`queue`）中。`flushSchedulerQueue`函数会依次调用数组中观察者的更新方法，`flushSchedulerQueue`函数会通过`nextTick`添加到微任务执行的数组中，之后会在微任务中被调用。观察者添加到数组时，通过`flushing`判断数组中观察者的更新方法是否已经开始执行，如果未执行（`flushing = false`）就直接添加到数组中，否则将当前观察者添加到正在执行的观察者的后面，且要当前观察者的`id`正好大于前面观察者的`id`。所以当前观察者也会在本次微任务中执行。
+
+```javascript
+// 观察者的update函数
+Watcher.prototype.update = function update () {
+  /* istanbul ignore else */
+  if (this.lazy) {
+    this.dirty = true;
+  } else if (this.sync) {
+    this.run();
+  } else {
+    queueWatcher(this);// 异步执行，在下一个微任务中执行
+  }
+};
+```
 
 ```javascript
 ar MAX_UPDATE_COUNT = 100;
@@ -85,7 +99,7 @@ function queueWatcher (watcher) {
   }
 }
 ```
-3.在flushSchedulerQueue函数中，设置`flushing = true`，表示已经开始执行收集的观察者的更新方法，首先将观察者根据id从小到大进行排序，然后调用更新方法（`watcher.run`），保证先调用父级的观察者的更新方法，再调用子级的观察者的更新方法。
+3.`flushSchedulerQueue`函数会添加到微任务的数组中，并在微任务执行时被调用。调用过程中，先设置`flushing = true`，表示已经开始执行收集的观察者更新方法，然后将观察者根据id从小到大进行排序，再执行更新方法（`watcher.run`），保证先执行父级观察者的更新方法，再调用子级观察者的更新方法。执行完所有的更新方法后，清空数组，并且设置`waiting`和`flushing`为`false`，分别表示下一次需要重新添加`flushSchedulerQueue`到微任务执行的数组中和当前未处于执行更新方法的状态（可以直接添加观察者到数组中）。最后执行观察者的`updated`、`updated`生命周期函数。
 
 ```javascript
 function flushSchedulerQueue () {
@@ -119,9 +133,7 @@ function flushSchedulerQueue () {
   // keep copies of post queues before resetting state
   var activatedQueue = activatedChildren.slice();
   var updatedQueue = queue.slice();
-  /* 执行完所有的watcher更新方法，重置数据，
-    清空队列，activatedChildren = [], queue = []
-    设置状态，
+  /* 
     开始接收下一轮的观察者。
   */
   resetSchedulerState();
@@ -129,12 +141,7 @@ function flushSchedulerQueue () {
   // call component updated and activated hooks
   callActivatedHooks(activatedQueue);
   callUpdatedHooks(updatedQueue);
-
-  // devtool hook
-  /* istanbul ignore if */
-  if (devtools && config.devtools) {
-    devtools.emit('flush');
-  }
+    ...
 }
 ```
 ```javascript
@@ -142,35 +149,22 @@ function flushSchedulerQueue () {
  * Reset the scheduler's state.
  */
 function resetSchedulerState () {
-  index = queue.length = activatedChildren.length = 0;
+  index = queue.length = activatedChildren.length = 0; // 清除数组
   has = {};
   if (process.env.NODE_ENV !== 'production') {
     circular = {};
   }
-  waiting = flushing = false;
+  waiting = flushing = false;// 更新标识，下一次需要重新添加`flushSchedulerQueue`到微任务执行的数组中，当前未处于执行更新方法的状态（可以直接添加观察者到数组中）
 }
 ```
+4.可以调用组件`$nextTick`方法执行`nextTick`函数，回调函数将在微任务中执行。
 
-```javascript
-function callUpdatedHooks (queue) {
-  var i = queue.length;
-  while (i--) {
-    var watcher = queue[i];
-    var vm = watcher.vm;
-    if (vm._watcher === watcher && vm._isMounted && !vm._isDestroyed) {
-      callHook(vm, 'updated');
-    }
-  }
-}
-```
-3.
-
-```javascript
-queueActivatedComponent
-```
-4. 
 ```javascript
 Vue.prototype.$nextTick = function (fn) {
     return nextTick(fn, this)
   };
 ```
+
+5.参考文档
+
+- (微任务)[https://developer.mozilla.org/zh-CN/docs/Web/API/HTML_DOM_API/Microtask_guide]
