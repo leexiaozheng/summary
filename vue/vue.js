@@ -728,16 +728,16 @@ var Dep = function Dep () {
 };
 
 Dep.prototype.addSub = function addSub (sub) {
-  this.subs.push(sub);
+  this.subs.push(sub);// 添加观察者
 };
 
 Dep.prototype.removeSub = function removeSub (sub) {
-  remove(this.subs, sub);
+  remove(this.subs, sub);// 移除观察者
 };
 
 Dep.prototype.depend = function depend () {
   if (Dep.target) {
-    Dep.target.addDep(this);// 添加依赖收集器到观察者中，方便观察者销毁时从依赖收集器中去除
+    Dep.target.addDep(this);// 添加Dep实例到观察者中，方便观察者销毁时从实例中移除
   }
 };
 
@@ -745,10 +745,7 @@ Dep.prototype.notify = function notify () {
   // stabilize the subscriber list first
   var subs = this.subs.slice();
   if (process.env.NODE_ENV !== 'production' && !config.async) {
-    // subs aren't sorted in scheduler if not running async
-    // we need to sort them now to make sure they fire in correct
-    // order
-    subs.sort(function (a, b) { return a.id - b.id; });
+    subs.sort(function (a, b) { return a.id - b.id; });// 观察者从小到达排序
   }
   for (var i = 0, l = subs.length; i < l; i++) {
     subs[i].update();
@@ -757,18 +754,18 @@ Dep.prototype.notify = function notify () {
 
 // The current target watcher being evaluated.
 // This is globally unique because only one watcher
-// can be evaluated at a time.相当于一个上下文的作用（公共变量），用来存储当前正在执行的watcher实例
-Dep.target = null;
-var targetStack = [];
+// can be evaluated at a time.
+Dep.target = null;// 保存在构造器上，全局观察者
+var targetStack = [];// 堆栈，保存处于更新的观察者
 
 function pushTarget (target) {
-  targetStack.push(target);// 添加观察者进入堆栈
-  Dep.target = target;
+  targetStack.push(target);// 设置target观察者入栈
+  Dep.target = target;// 设置target观察者为全局观察者
 }
 
 function popTarget () {
-  targetStack.pop();
-  Dep.target = targetStack[targetStack.length - 1];
+  targetStack.pop();// 当前观察者出栈
+  Dep.target = targetStack[targetStack.length - 1];// 设置栈中最新的观察者为全局观察者
 }
 
 /*  */
