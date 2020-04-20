@@ -1,5 +1,6 @@
 html：
 
+```html
     <!DOCTYPE html>
     <html lang="zh">
     <head>
@@ -11,10 +12,11 @@ html：
     </body>
 
     </html>
-
+```
 
 main.js：
 
+```javascript
     import Vue from "vue";
     import Home from "./home.vue";
 
@@ -23,10 +25,11 @@ main.js：
         template: "<Home/>",
         components: { Home }
     });
+```
 
+home.vue:
 
-home.vue
-
+```html
     <template>
         <div class="home">
             test
@@ -46,6 +49,7 @@ home.vue
         }
     };
     </script>
+```
 
 1. 在main.js中`new Vue()`生成根组件实例`vm`，`Vue`构造器执行`_init`方法。
 
@@ -118,7 +122,7 @@ render函数中的_c指向是_createElement方法。
             return _c('Home')
         }
 
-6. _createElement中，根据绑定在$options上的构造器参数的components属性，获取Home组件对象。
+6. _createElement中，根据绑定在$options上的构造器参数的components属性，获取Home组件选项。
 
         function _createElement (context, tag, data, children, normalizationType
         ) {
@@ -137,9 +141,9 @@ render函数中的_c指向是_createElement方法。
             }
         }
 
-7. Home组件对象就是home.vue文件中默认导出的对象，当创建多个组件时，都是基于同一个组件对象。vue-loader插件会将vue格式的文件中的template转化成render函数放在组件对象中。`components: { Home }`中的Home就是home组件对象。
+7. Home组件选项就是home.vue文件中默认导出的对象，当创建多个组件时，都是基于同一个组件选项。vue-loader插件会将vue格式的文件中的template转化成render函数放在组件选项中。`components: { Home }`中的Home就是home组件选项。
 
-8. 获取到的home组件对象作为参数，传入createComponet函数中，在该函数中，调用extend方法，传入组件对象生成组件构造器，安装节点生命周期钩子，同时创建VNode实例，将组件构造器和节点生命周期钩子保存在VNode节点实例上。
+8. 获取到的home组件选项作为参数，传入createComponet函数中，在该函数中，调用extend方法，传入组件选项生成组件构造器，安装节点生命周期钩子，同时创建VNode实例，将组件构造器和节点生命周期钩子保存在VNode节点实例上。
 
         function createComponent (
         Ctor,
@@ -323,11 +327,11 @@ VNode:
         return new vnode.componentOptions.Ctor(options)
     }
 
-11. home组件实例的生成过程与根组件基本一致，但是与根组件不同的是home组件对象中没有el属性，也就是没有组件根元素的id或引用，所以在_init方法中未执行`vm.$mount(vm.$options.el)`，而是在节点生命周期钩子函数init中，生成组件实例（_init执行完成）之后，调用了$mount函数。
+11. home组件实例的生成过程与根组件基本一致，但是与根组件不同的是home组件选项中没有el属性，也就是没有组件根元素的id或引用，所以在_init方法中未执行`vm.$mount(vm.$options.el)`，而是在节点生命周期钩子函数init中，生成组件实例（_init执行完成）之后，调用了$mount函数。
 
 12. 之后依次调用`$mount` -> `mountComponent` -> `vm._update(vm._render(), hydrating)` -> `vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false)`,render函数是在编译时生成。render生成VNode节点实例，节点实例包含文本子节点。并将节点实例传入__patch__，利用patch方法将节点实例渲染成DOM节点，并将生成的DOM根元素保存在VNode节点实例上。并将根元素添加到父节点上，完成整个页面的渲染。
 
-编译生成的render函数，保存在组件对象中：
+编译生成的render函数，保存在组件选项中：
 
     render = function() {
         var _vm = this

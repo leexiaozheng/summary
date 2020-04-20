@@ -1000,7 +1000,7 @@ function observe (value, asRootData) {
     return
   }
   var ob;
-  if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
+  if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {// 存在__ob__，例如props数据一般在父组件已经设置了响应式，在子组件设置响应式时就不需要再次设置
     ob = value.__ob__;
   } else if (
     shouldObserve &&
@@ -1039,7 +1039,7 @@ function defineReactive$$1 (
   // cater for pre-defined getter/setters 在属性可能在设置可响应之前就存在get和set
   var getter = property && property.get;
   var setter = property && property.set;
-  if ((!getter || setter) && arguments.length === 2) { // 疑问？：判断条件的原因
+  if ((!getter || setter) && arguments.length === 2) { // 没有val值且没有getter或者有setter时，获取val，再设置val响应式。
     val = obj[key];
   }
 
@@ -3460,7 +3460,7 @@ function _createElement (
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       );
-    } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {/* 从vm实例的option的components中寻找该tag */
+    } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {/* 从组件实例option的components中寻找该标签对应的组件选项 */
       // component
       vnode = createComponent(Ctor, data, context, children, tag);
     } else {

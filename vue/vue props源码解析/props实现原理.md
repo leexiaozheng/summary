@@ -1,4 +1,4 @@
-1. 根据组件标签生成节点（VNode实例）时，props属性名和属性值以键值对形式保存在节点上(propsData)。
+1.根据组件标签生成节点（VNode实例）时，props属性名和属性值以键值对形式保存在节点上(propsData)。
 
 ```javascript
 var vnode = new VNode(
@@ -10,12 +10,12 @@ var vnode = new VNode(
 
 ```
 
-2. 生成组件初始化props时，将props属性挂载到组件上，并将保存的props值赋值到属性上。设置props为响应式，监测props值的变化。
+2.创建组件实例时，初始化`props`，获取组件标签上的`props`键值对数据`propsData`，遍历组件选项中的`props`属性，根据`propsData`获取属性对应的值，并将`props`属性定义到组件`_props`上，并实现属性的响应式，再由组件代理`_props`上的属性，使属性的上下文指向组件。
 
 ```javascript
-// 初始化props，设置props属性值
+// 初始化props
 function initProps (vm, propsOptions) {
-  var propsData = vm.$options.propsData || {};//组件标签上props
+  var propsData = vm.$options.propsData || {};//组件标签上props数据
   var props = vm._props = {};
   // cache prop keys so that future props updates can iterate using Array
   // instead of dynamic object key enumeration.
@@ -38,7 +38,7 @@ function initProps (vm, propsOptions) {
           vm
         );
       }
-      defineReactive$$1(props, key, value, function () {// 设置prop响应式，并且添加提示不能直接更改props属性值
+      defineReactive$$1(props, key, value, function () {// 设置prop响应式，当更改props属性时警告（更改props属性值里的属性时无警告）
         if (!isRoot && !isUpdatingChildComponent) {
           warn(
             "Avoid mutating a prop directly since the value will be " +
@@ -62,4 +62,4 @@ function initProps (vm, propsOptions) {
 }
 ```
 
-3. 当组件标签上的props属性值发生变化时，又会重新生成组件节点，执行以上的操作，对组件上的props属性重新赋值，而组件内引用该props属性的页面将会通知更新（响应式）。
+3.当赋值给props属性的父组件data值修改时，页面更新，又会重新生成标签节点，执行以上的操作，对组件上的props属性重新赋值，而组件内引用该props属性的页面将会通知更新（响应式）。
