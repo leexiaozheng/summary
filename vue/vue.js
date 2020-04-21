@@ -3284,10 +3284,10 @@ function createComponent (
 
   // extract listeners, since these needs to be treated as
   // child component listeners instead of DOM listeners
-  var listeners = data.on;// 绑定在组件标签上的事件
+  var listeners = data.on;// 组件标签上的自定义事件
   // replace with listeners with .native modifier
   // so it gets processed during parent component patch.
-  data.on = data.nativeOn;// 绑定到组件的原生事件
+  data.on = data.nativeOn;// 组件标签上的原生事件
 
   if (isTrue(Ctor.options.abstract)) {
     // abstract components do not keep anything
