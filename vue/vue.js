@@ -911,7 +911,7 @@ methodsToPatch.forEach(function (method) {
 var arrayKeys = Object.getOwnPropertyNames(arrayMethods);
 
 /**
- * 组件变化是否监听开关,是否可以创建可观察对象实例
+ * 标识说明是否需要设置响应式
  * In some cases we may want to disable observation inside a component's
  * update computation.
  */
@@ -2470,7 +2470,7 @@ function initProvide (vm) {
 function initInjections (vm) {
   var result = resolveInject(vm.$options.inject, vm);// 找到inject对应的provider
   if (result) {
-    toggleObserving(false);// 不需要设置注入对象的属性为可观察对象
+    toggleObserving(false);// 不需要设置注入对象响应式
     Object.keys(result).forEach(function (key) {
       /* istanbul ignore else */
       if (process.env.NODE_ENV !== 'production') {
@@ -3147,7 +3147,7 @@ function mergeProps (to, from) {
 
 /*  */
 
-// 节点的生命周期，在patch（新建、比对更新、销毁）触发
+// 组件节点生命周期，patch过程中节点初始、更新、销毁时触发
 // inline hooks to be invoked on component VNodes during patch
 var componentVNodeHooks = {
   init: function init (vnode, hydrating) {
@@ -3162,7 +3162,7 @@ var componentVNodeHooks = {
     } else {
       var child = vnode.componentInstance = createComponentInstanceForVnode(
         vnode,
-        activeInstance// 当前更新组件实例，也就是父组件实例
+        activeInstance// 当前更新的组件， 是child的父组件
       );
       child.$mount(hydrating ? vnode.elm : undefined, hydrating);
     }
@@ -3212,7 +3212,9 @@ var componentVNodeHooks = {
     }
   }
 };
-
+/**
+ * 组件
+ */
 var hooksToMerge = Object.keys(componentVNodeHooks);
 // 构架组件构造函数以及节点实例
 function createComponent (
@@ -4142,7 +4144,7 @@ function updateChildComponent (
   renderChildren
 ) {
   if (process.env.NODE_ENV !== 'production') {
-    isUpdatingChildComponent = true;
+    isUpdatingChildComponent = true;// 标识说明正在更新组件
   }
 
   // determine whether component has slot children
@@ -4190,7 +4192,7 @@ function updateChildComponent (
     for (var i = 0; i < propKeys.length; i++) {
       var key = propKeys[i];
       var propOptions = vm.$options.props; // wtf flow?
-      props[key] = validateProp(key, propOptions, propsData, vm);
+      props[key] = validateProp(key, propOptions, propsData, vm);// 更新属性值
     }
     toggleObserving(true);
     // keep a copy of raw propsData
@@ -4703,7 +4705,7 @@ function initState (vm) {
 
 // 初始化props，设置props属性值
 function initProps (vm, propsOptions) {
-  var propsData = vm.$options.propsData || {};//组件标签上props
+  var propsData = vm.$options.propsData || {};//组件标签上props数据
   var props = vm._props = {};
   // cache prop keys so that future props updates can iterate using Array
   // instead of dynamic object key enumeration.
@@ -4711,7 +4713,7 @@ function initProps (vm, propsOptions) {
   var isRoot = !vm.$parent;
   // root instance props should be converted
   if (!isRoot) {
-    toggleObserving(false);
+    toggleObserving(false);// 设置props对象属性响应式，不设置对象属性值响应式（对象属性值的响应式可能来自于父组件data数据）
   }
   var loop = function ( key ) {
     keys.push(key);
@@ -4726,9 +4728,9 @@ function initProps (vm, propsOptions) {
           vm
         );
       }
-      defineReactive$$1(props, key, value, function () {// 设置prop响应式
+      defineReactive$$1(props, key, value, function () {// 设置props对象属性响应式
         if (!isRoot && !isUpdatingChildComponent) {
-          warn(
+          warn(// 如果更改了props对象属性的值警告
             "Avoid mutating a prop directly since the value will be " +
             "overwritten whenever the parent component re-renders. " +
             "Instead, use a data or computed property based on the prop's " +
@@ -4751,10 +4753,10 @@ function initProps (vm, propsOptions) {
   for (var key in propsOptions) loop( key );
   toggleObserving(true);
 }
-/**初始化data，防止和props和methods重复，并且设置为可观察对象 */
+/**初始化data，防止和props和methods重复 */
 function initData (vm) {
   var data = vm.$options.data;
-  data = vm._data = typeof data === 'function'// 调用data函数获取对象，并赋值到组件实例_data上
+  data = vm._data = typeof data === 'function'// 调用data函数获取对象，并赋值到组件_data上
     ? getData(data, vm)
     : data || {};
   if (!isPlainObject(data)) {
@@ -4787,16 +4789,16 @@ function initData (vm) {
         vm
       );
     } else if (!isReserved(key)) {
-      proxy(vm, "_data", key);// data代理
+      proxy(vm, "_data", key);// 组件代理_data数据
     }
   }
   // observe data
-  observe(data, true /* asRootData */);// 响应式设置
+  observe(data, true /* asRootData */);// 设置响应式
 }
 
 function getData (data, vm) {
   // #7573 disable dep collection when invoking data getters
-  pushTarget();
+  pushTarget();// 清空全局观察者
   try {
     return data.call(vm, vm)
   } catch (e) {
@@ -6311,7 +6313,7 @@ function createPatchFunction (backend) {
       if (isDef(c) && sameVnode(node, c)) { return i }
     }
   }
-
+  // 根据相同（sameVnode）的新旧节点更新页面
   function patchVnode (
     oldVnode,
     vnode,
