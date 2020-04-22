@@ -2207,7 +2207,7 @@ var normalizeEvent = cached(function (name) {
     passive: passive
   }
 });
-
+// 封装函数，将原始函数保存在封装函数的fns属性上。当原始函数发生变更时，只修改fns属性就可以。
 function createFnInvoker (fns, vm) {
   function invoker () {
     var arguments$1 = arguments;
@@ -2247,15 +2247,15 @@ function updateListeners (
       );
     } else if (isUndef(old)) {
       if (isUndef(cur.fns)) {
-        cur = on[name] = createFnInvoker(cur, vm);// 格式
+        cur = on[name] = createFnInvoker(cur, vm);// 封装回调函数：将原始回调函数绑定封装的回调函数fn属性上。
       }
       if (isTrue(event.once)) {
         cur = on[name] = createOnceHandler(event.name, cur, event.capture);
       }
-      add(event.name, cur, event.capture, event.passive, event.params);// 组件标签上的监听事件添加到组件实例上
+      add(event.name, cur, event.capture, event.passive, event.params);// 添加事件回调函数
     } else if (cur !== old) {
-      old.fns = cur;
-      on[name] = old;
+      old.fns = cur;// 更换原始回调函数
+      on[name] = old;// 替换为封装的回掉函数
     }
   }
   for (name in oldOn) {
@@ -3216,7 +3216,7 @@ var componentVNodeHooks = {
  * 组件
  */
 var hooksToMerge = Object.keys(componentVNodeHooks);
-// 构架组件构造函数以及节点实例
+// 创建组件标签节点
 function createComponent (
   Ctor,
   data,
@@ -3232,7 +3232,7 @@ function createComponent (
 
   // plain options object: turn it into a constructor
   if (isObject(Ctor)) {
-    Ctor = baseCtor.extend(Ctor);
+    Ctor = baseCtor.extend(Ctor); // 组件构造器
   }
 
   // if at this stage it's not a constructor or an async component factory,
@@ -3302,7 +3302,7 @@ function createComponent (
   }
 
   // install component management hooks onto the placeholder node
-  installComponentHooks(data);
+  installComponentHooks(data);// 添加组件节点生命周期函数（创建组件时，插入到页面上时，更新时，销毁时）
 
   // return a placeholder vnode
   var name = Ctor.options.name || tag;
@@ -3407,7 +3407,7 @@ function createElement (
 function _createElement (
   context,
   tag,
-  data, //事件 { on: {test: function } }, 属性 attrs: {"name":value}
+  data, //事件 { on: {test: function } }, 属性 attrs: {"name":value},指令{model:{value:(name),callback:function ($$v) {name=$$v},expression:"name"}}
   children,
   normalizationType
 ) {
@@ -5902,9 +5902,9 @@ function createKeyToOldIdx (children, beginIdx, endIdx) {
 
 function createPatchFunction (backend) {
   var i, j;
-  var cbs = {};// 指令生命周期
+  var cbs = {};// 在节点的不同时期（插入到DOM，更新，销毁）对标签上的数据（事件）进行处理的函数集合
 
-  var modules = backend.modules;// 
+  var modules = backend.modules;
   var nodeOps = backend.nodeOps;// dom操作方法
 
   for (i = 0; i < hooks.length; ++i) {
@@ -7559,7 +7559,7 @@ function normalizeEvents (on) {
 }
 
 var target$1;
-
+// 添加一次性原生事件
 function createOnceHandler$1 (event, handler, capture) {
   var _target = target$1; // save current target element in closure
   return function onceHandler () {
@@ -7574,8 +7574,8 @@ function createOnceHandler$1 (event, handler, capture) {
 // implementation and does not fire microtasks in between event propagation, so
 // safe to exclude.
 var useMicrotaskFix = isUsingMicroTask && !(isFF && Number(isFF[1]) <= 53);
-
-function add$1 (// 在原生DOM原生上添加事件
+// 添加事件到原生DOM上
+function add$1 (
   name,
   handler,
   capture,
@@ -7633,13 +7633,13 @@ function remove$2 (// 移除原生DOM元素上的事件
   );
 }
 
-function updateDOMListeners (oldVnode, vnode) {// 更新原生DOM上的事件
+function updateDOMListeners (oldVnode, vnode) {// 更新原生事件
   if (isUndef(oldVnode.data.on) && isUndef(vnode.data.on)) {
     return
   }
-  var on = vnode.data.on || {};
-  var oldOn = oldVnode.data.on || {};
-  target$1 = vnode.elm;
+  var on = vnode.data.on || {};// 新标签上的原生事件
+  var oldOn = oldVnode.data.on || {};// 就标签上的原生事件
+  target$1 = vnode.elm;// 标签对应的DOM元素，组件节点指向的原生根标签对应的DOM元素
   normalizeEvents(on);
   updateListeners(on, oldOn, add$1, remove$2, createOnceHandler$1, vnode.context);
   target$1 = undefined;
