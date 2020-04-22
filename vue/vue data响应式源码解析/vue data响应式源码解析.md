@@ -1,12 +1,12 @@
-1.获取组件选项的 data，然后调用 data 函数（上下文和参数都是组件实例），返回 data 数据保存到组件`_data`属性上，再由组件代理`_data`属性上的数据。最后调用observe实现data数据的响应式。
+1.获取组件选项的 `data`，然后调用 `data` 函数（this和参数都指向当前组件），返回 `data` 数据保存到组件`_data`属性上，再由组件代理`_data`属性上的数据。最后调用`observe`实现`data`数据的响应式。
 
-> 如果组件选项中的 data 是对象而不是函数，当存在多个该组件时，引用的是相同的组件选项对象，组件操作data会互相影响。data数据之间也不能通过this互相引用，因为先创建data数据对象，然后组件才代理data数据。
+> 如果组件选项中的 `data` 是对象而不是函数，当存在多个该组件时，引用的是相同的组件选项对象，组件操作data会互相影响。组件选项中的 `data`数据之间也不能通过`this`互相引用，因为先创建`data`数据对象，然后组件才代理data数据。
 
 ```javascript
 function initData (vm) {
   var data = vm.$options.data;
-  data = vm._data = typeof data === 'function'// 调用data函数获取数据，并赋值到组件实例_data上(data函数的上下文和参数都是组件实例vm)
-    ? getData(data, vm)
+  data = vm._data = typeof data === 'function' //赋值到组件实例_data上
+    ? getData(data, vm)// 调用data函数获取数据，data函数内的this和参数都指向当前组件
     : data || {};
     ...
   // proxy data on instance
@@ -65,7 +65,7 @@ function observe (value, asRootData) {
 }
 ```
 
-3.Observer构造器中，将Obsserver实例保存到数据中。判断数据类型是否为数组，根据判断结果进行不同的操作。
+3.`Observer`构造器中，将`Observer`实例保存到数据中，可以标识数据是否设置了响应式。判断数据类型是否为数组，根据判断结果进行不同的操作。
 
 ```javascript
 var Observer = function Observer (value) {
@@ -85,7 +85,7 @@ var Observer = function Observer (value) {
   }
 };
 ```
-4.如果是数组，更改数组的`__proto__`指向`arrayMethods`，而`arrayMethods`的`__proto__`指向`Array.prototype`（`arrayMethods = Object.create(Array.prototype)`）。通过添加`arrayMethods`中间层，代理数组方法，可以监测到数组的更新触发通知。再调用Observer实例的observeArray方法，遍历数组，对数组元素继续调用observe方法。
+4.如果是数组，更改数组的`__proto__`指向`arrayMethods`，而`arrayMethods`的`__proto__`指向`Array.prototype`（`arrayMethods = Object.create(Array.prototype)`）。通过添加`arrayMethods`中间层，代理数组方法，可以监测到数组的更新触发通知。再调用`Observer`实例的`observeArray`方法，遍历数组，对数组元素继续调用`observe`方法。
 
 ```javascript
 function protoAugment (target, src) {
@@ -144,7 +144,7 @@ Observer.prototype.walk = function walk (obj) {
   }
 };
 ```
-5.`defineReactive$$1`函数中，每个对象属性都存在一个`Dep`实例，收集依赖（读取）该属性值的观察者。先对属性值继续调用observe，再定义属性，添加属性的get和set方法。当读取该属性时，触发get方法，将当前观察者保存到Dep实例上。当属性值修改时，触发set方法，对修改后的属性值调用observe方法，并通知之前保存的观察者。
+5.`defineReactive$$1`函数中，每个对象属性都关联一个`Dep`实例，收集依赖（读取）该属性值的观察者。先对属性值继续调用`observe`，再定义属性，添加属性的get和set方法。当读取该属性时，触发get方法，将当前观察者保存到`Dep`实例上。当属性值修改时，触发`set`方法，对修改后的属性值调用`observe`方法，并通知之前保存的观察者，从而实现数据的响应式。
 
 ```javascript
 function defineReactive$$1 (
@@ -261,14 +261,14 @@ function mountComponent (
     };
   } else {
     updateComponent = function () {
-      vm._update(vm._render(), hydrating);// 更新视图
+      vm._update(vm._render(), hydrating);// 更新页面
     };
   }
 
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
-  new Watcher(vm, updateComponent, noop, {
+  new Watcher(vm, updateComponent, noop, { // 创建观察者
     before: function before () {
       if (vm._isMounted && !vm._isDestroyed) {
         callHook(vm, 'beforeUpdate');
@@ -286,7 +286,7 @@ function mountComponent (
   return vm
 }
 ```
-7.该观察者在创建过程中，会调用`getter`函数，调用之前保存该观察者在`Dep.target`上。调用页面更新的`getter`函数会读取`data`中的数据，读取对象属性会触发属性的`get`函数，将`Dep.target`添加到对象属性对应的`Dep`实例上。调用完成之后移除保存在`Dep.target`上的观察者。
+7.该观察者在创建过程中，会调用`getter`函数，调用之前保存该观察者在`Dep.target`上。调用页面更新的`getter`函数会读取`data`中的数据，读取对象属性会触发属性的`get`函数，将`Dep.target`添加到对象属性关联的`Dep`实例上。调用完成之后移除保存在`Dep.target`上的观察者。
 
 ```javascript
 var Watcher = function Watcher (
@@ -375,7 +375,7 @@ Watcher.prototype.update = function update () {
   }
 };
 ```
-9.`Dep`实例收集依赖数据的观察者，并在数据更新时通知观察者。同时在Dep构造器上保存全局的观察者，用于数据读取时收集依赖它的观察者。
+9.`Dep`实例收集依赖数据的观察者，并在数据更新时通知观察者。同时在Dep构造器上保存全局的观察者，用于数据读取时收集依赖它的观察者（`Dep.target`）。
 
 ```javascript
 /**

@@ -1007,7 +1007,7 @@ function observe (value, asRootData) {
     !isServerRendering() &&
     (Array.isArray(value) || isPlainObject(value)) &&
     Object.isExtensible(value) &&
-    !value._isVue
+    !value._isVue // 不是组件
   ) {
     ob = new Observer(value);
   }
