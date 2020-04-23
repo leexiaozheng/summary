@@ -1,4 +1,5 @@
-> html：
+html：
+
 ```html
 <!DOCTYPE html>
 <html lang="zh">
@@ -24,7 +25,8 @@ new Vue({
 });
 ```
 
-> home.vue
+home.vue
+
 ```html
 <template>
     <div class="home">

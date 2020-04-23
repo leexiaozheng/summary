@@ -3216,7 +3216,9 @@ var componentVNodeHooks = {
  * 组件
  */
 var hooksToMerge = Object.keys(componentVNodeHooks);
-// 创建组件标签节点
+/**
+ * 创建组件标签节点，组件信息保存在componentOptions上
+ */
 function createComponent (
   Ctor,
   data,
@@ -5969,7 +5971,9 @@ function createPatchFunction (backend) {
   }
 
   var creatingElmInVPre = 0;
-
+  /**
+   * 创建DOM元素，并添加到父级DOM元素中。（组件节点先创建组件，再渲染组件，最后添加到父级DOM中）
+   */
   function createElm (
     vnode,
     insertedVnodeQueue,
@@ -6020,7 +6024,7 @@ function createPatchFunction (backend) {
       {
         createChildren(vnode, children, insertedVnodeQueue);
         if (isDef(data)) {
-          invokeCreateHooks(vnode, insertedVnodeQueue);
+          invokeCreateHooks(vnode, insertedVnodeQueue);// 调用create节点钩子函数
         }
         insert(parentElm, vnode.elm, refElm);
       }
@@ -6036,7 +6040,9 @@ function createPatchFunction (backend) {
       insert(parentElm, vnode.elm, refElm);
     }
   }
-
+  /**
+   * 创建组件，并将组件内标签生成的DOM添加到父级DOM中
+   */
   function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     var i = vnode.data;
     if (isDef(i)) {
@@ -6066,7 +6072,7 @@ function createPatchFunction (backend) {
     }
     vnode.elm = vnode.componentInstance.$el;// 保持组件节点和组件内原生根标签节点指向的DOM一致
     if (isPatchable(vnode)) {
-      invokeCreateHooks(vnode, insertedVnodeQueue);
+      invokeCreateHooks(vnode, insertedVnodeQueue);// 调用create钩子函数
       setScope(vnode);
     } else {
       // empty component root.
@@ -6123,14 +6129,18 @@ function createPatchFunction (backend) {
       nodeOps.appendChild(vnode.elm, nodeOps.createTextNode(String(vnode.text)));
     }
   }
-  // 向下找到非标签组件节点，并且节点存在tag（非注释节点和文本节点）
+/**
+ * 向下找到原生标签节点（非注释节点和文本节点）
+ */ 
   function isPatchable (vnode) {
     while (vnode.componentInstance) {
       vnode = vnode.componentInstance._vnode;
     }
     return isDef(vnode.tag)
   }
-
+/**
+* 调用create钩子函数， 并将需要调用inserted钩子函数的节点添加insertedVnodeQueue队列中
+*/
   function invokeCreateHooks (vnode, insertedVnodeQueue) {
     for (var i$1 = 0; i$1 < cbs.create.length; ++i$1) {
       cbs.create[i$1](emptyNode, vnode);
@@ -6141,10 +6151,9 @@ function createPatchFunction (backend) {
       if (isDef(i.insert)) { insertedVnodeQueue.push(vnode); }
     }
   }
-  // 设置标签属性，添加css的作用域
-  // set scope id attribute for scoped CSS.
-  // this is implemented as a special case to avoid the overhead
-  // of going through the normal attribute patching process.
+/**
+ * // 添加标签属性，设置css作用域
+ */  
   function setScope (vnode) {
     var i;
     if (isDef(i = vnode.fnScopeId)) {
@@ -6505,7 +6514,7 @@ function createPatchFunction (backend) {
         for (var key in data) {
           if (!isRenderedModule(key)) {
             fullInvoke = true;
-            invokeCreateHooks(vnode, insertedVnodeQueue);
+            invokeCreateHooks(vnode, insertedVnodeQueue);// 调用钩子函数
             break
           }
         }
@@ -6561,7 +6570,7 @@ function createPatchFunction (backend) {
           if (isTrue(hydrating)) {
             // 需要合并到真实DOM上
             if (hydrate(oldVnode, vnode, insertedVnodeQueue)) {
-              invokeInsertHook(vnode, insertedVnodeQueue, true);
+              invokeInsertHook(vnode, insertedVnodeQueue, true);// 调用insert节点钩子函数
               return oldVnode
             } else if (process.env.NODE_ENV !== 'production') {
               warn(
@@ -6609,7 +6618,7 @@ function createPatchFunction (backend) {
               // #6513
               // invoke insert hooks that may have been merged by create hooks.
               // e.g. for directives that uses the "inserted" hook.
-              var insert = ancestor.data.hook.insert;
+              var insert = ancestor.data.hook.insert;// 节点钩子函数
               if (insert.merged) {
                 // start at index 1 to avoid re-invoking component mounted hook
                 for (var i$2 = 1; i$2 < insert.fns.length; i$2++) {
