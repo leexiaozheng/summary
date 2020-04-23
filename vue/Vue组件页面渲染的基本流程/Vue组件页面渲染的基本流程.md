@@ -99,12 +99,12 @@ var VNode = function VNode (
   asyncFactory
 ) {
   this.tag = tag;// 标签名
-  this.data = data;// 节点数据,包括节点的生命周期函数
+  this.data = data;// 节点数据（原生事件信息），包括节点的钩子函数（包含标签上数据的钩子函数，例如：指令）
   this.children = children;// 当节点是原生标签节点，保存它的子节点
   this.text = text;// 为文本节点或者注释节点时的文本内容
   this.elm = elm;// 节点对应的DOM，组件节点则对应的是该组件内原生根标签DOM
   this.ns = undefined;
-  this.context = context;// 节点对应的组件
+  this.context = context;// 节点对应标签所在的组件（组件内包含该标签）
   this.fnContext = undefined;
   this.fnOptions = undefined;
   this.fnScopeId = undefined;
@@ -270,7 +270,7 @@ function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     if (isDef(i)) {
         var isReactivated = isDef(vnode.componentInstance) && i.keepAlive;
         if (isDef(i = i.hook) && isDef(i = i.init)) {
-            i(vnode, false /* hydrating */);// 调用节点生命周期函数init，生成组件
+            i(vnode, false /* hydrating */);// 调用节点钩子函数init，生成组件
         }
         if (isDef(vnode.componentInstance)) {
             initComponent(vnode, insertedVnodeQueue);
@@ -285,7 +285,7 @@ function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
 ```
 
 ```javascript
-// 在节点生命周期init创建组件
+// 在节点钩子函数init创建组件
 function init (vnode, hydrating) {
     ...
     var child = vnode.componentInstance = createComponentInstanceForVnode(// 创建组件

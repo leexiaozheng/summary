@@ -99,7 +99,7 @@ function queueWatcher (watcher) {
   }
 }
 ```
-3.`flushSchedulerQueue`函数会添加到微任务的数组中，并在微任务执行时被调用。调用过程中，先设置`flushing = true`，表示已经开始执行收集的观察者更新方法，然后将观察者根据id从小到大进行排序，再执行更新方法（`watcher.run`），保证先执行父级观察者的更新方法，再调用子级观察者的更新方法。执行完所有的更新方法后，清空数组，并且设置`waiting`和`flushing`为`false`，分别表示下一次需要重新添加`flushSchedulerQueue`到微任务执行的数组中和当前未处于执行更新方法的状态（可以直接添加观察者到数组中）。最后执行观察者的`updated`、`updated`生命周期函数。
+3.`flushSchedulerQueue`函数会添加到微任务的数组中，并在微任务执行时被调用。调用过程中，先设置`flushing = true`，表示已经开始执行收集的观察者更新方法，然后将观察者根据id从小到大进行排序，再执行更新方法（`watcher.run`），保证先执行父级观察者的更新方法，再调用子级观察者的更新方法。执行完所有的更新方法后，清空数组，并且设置`waiting`和`flushing`为`false`，分别表示下一次需要重新添加`flushSchedulerQueue`到微任务执行的数组中和当前未处于执行更新方法的状态（可以直接添加观察者到数组中）。最后执行观察者的`updated`、`activated`生命周期函数。
 
 ```javascript
 function flushSchedulerQueue () {

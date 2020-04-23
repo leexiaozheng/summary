@@ -23,7 +23,7 @@ function Vue$3 (options) {
 - 执行initUse(Vue);添加use方法；
 - 执行initMixin$1(Vue);添加mixin方法；
 - 执行initExtend(Vue);添加extend方法；
-- 执行initAssetRegisters(Vue);添加filter,component,directive方法；
+- 执行initAssetRegisters(Vue);添加filter,component,directive全局注册方法；
  
 4.Vue原型直接添加$mount方法，然后通过mount变量保存该方法，然后Vue原型的$mount方法又被重新创建了；
  

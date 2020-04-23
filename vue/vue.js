@@ -357,7 +357,7 @@ function once (fn) {
 }
 
 var SSR_ATTR = 'data-server-rendered';
-
+// 合并策略都是通过Object.create()
 var ASSET_TYPES = [
   'component',
   'directive',
@@ -781,12 +781,12 @@ var VNode = function VNode (
   asyncFactory
 ) {
   this.tag = tag;// 标签名
-  this.data = data;// 节点数据,包括节点的生命周期函数
+  this.data = data;// 节点数据（原生事件信息），包括节点的钩子函数（包含标签上数据的钩子函数，例如：指令）
   this.children = children;// 当节点是原生标签节点，保存它的子节点
   this.text = text;// 为文本节点或者注释节点时的文本内容
   this.elm = elm;// 节点对应的DOM，组件节点则对应的是该组件内原生根标签DOM
   this.ns = undefined;
-  this.context = context;// 节点对应的组件
+  this.context = context;// 节点对应标签所在的组件（组件内包含该标签）
   this.fnContext = undefined;
   this.fnOptions = undefined;
   this.fnScopeId = undefined;
@@ -1291,7 +1291,7 @@ strats.data = function (
 };
 
 /**
- * 合并生命周期
+ * 生命周期合并策略
  * Hooks and props are merged as arrays.
  */
 function mergeHook (
@@ -1319,7 +1319,7 @@ function dedupeHooks (hooks) {
   }
   return res
 }
-/**生命周期默认合并策略 */
+/**添加生命周期合并策略 */
 LIFECYCLE_HOOKS.forEach(function (hook) {
   strats[hook] = mergeHook;
 });
@@ -1513,14 +1513,14 @@ function normalizeInject (options, vm) {
 
 /**
  * Normalize raw function directives into object format.
- * 格式组件指令
+ * 格式化组件指令
  */
 function normalizeDirectives (options) {
   var dirs = options.directives;
   if (dirs) {
     for (var key in dirs) {
       var def$$1 = dirs[key];
-      if (typeof def$$1 === 'function') {
+      if (typeof def$$1 === 'function') { // 值为函数类型，bind 和 update 时触发相同行为
         dirs[key] = { bind: def$$1, update: def$$1 };
       }
     }
@@ -2270,16 +2270,16 @@ function updateListeners (
 
 function mergeVNodeHook (def, hookKey, hook) {
   if (def instanceof VNode) {
-    def = def.data.hook || (def.data.hook = {});
+    def = def.data.hook || (def.data.hook = {});// 节点钩子函数集合
   }
   var invoker;
-  var oldHook = def[hookKey];
+  var oldHook = def[hookKey];// 特定阶段的周期函数
 
   function wrappedHook () {
     hook.apply(this, arguments);
     // important: remove merged hook to ensure it's called only once
     // and prevent memory leak
-    remove(invoker.fns, wrappedHook);
+    remove(invoker.fns, wrappedHook);// 调用之后移除
   }
 
   if (isUndef(oldHook)) {
@@ -2287,18 +2287,18 @@ function mergeVNodeHook (def, hookKey, hook) {
     invoker = createFnInvoker([wrappedHook]);
   } else {
     /* istanbul ignore if */
-    if (isDef(oldHook.fns) && isTrue(oldHook.merged)) {
+    if (isDef(oldHook.fns) && isTrue(oldHook.merged)) {// 已经封装过的，周期函数已经发生合并
       // already a merged invoker
       invoker = oldHook;
-      invoker.fns.push(wrappedHook);
+      invoker.fns.push(wrappedHook);// 添加新的周期函数
     } else {
       // existing plain hook
-      invoker = createFnInvoker([oldHook, wrappedHook]);
+      invoker = createFnInvoker([oldHook, wrappedHook]);// 封装周期函数，在原始钩子函数执行之后，执行新增的钩子函数
     }
   }
 
-  invoker.merged = true;
-  def[hookKey] = invoker;
+  invoker.merged = true;// 标识周期函数发生合并
+  def[hookKey] = invoker;// 更新周期函数
 }
 
 /*  */
@@ -3147,7 +3147,7 @@ function mergeProps (to, from) {
 
 /*  */
 
-// 组件节点生命周期，patch过程中节点初始、更新、销毁时触发
+// 节点钩子周期，patch过程中节点初始、更新、销毁时触发
 // inline hooks to be invoked on component VNodes during patch
 var componentVNodeHooks = {
   init: function init (vnode, hydrating) {
@@ -3201,7 +3201,7 @@ var componentVNodeHooks = {
     }
   },
 
-  destroy: function destroy (vnode) {// 节点销毁生命周期函数
+  destroy: function destroy (vnode) {// 节点销毁钩子函数
     var componentInstance = vnode.componentInstance;
     if (!componentInstance._isDestroyed) {
       if (!vnode.data.keepAlive) {// 是不是keep-alive中的缓存组件
@@ -3302,7 +3302,7 @@ function createComponent (
   }
 
   // install component management hooks onto the placeholder node
-  installComponentHooks(data);// 添加组件节点生命周期函数（创建组件时，插入到页面上时，更新时，销毁时）
+  installComponentHooks(data);// 添加组件节点钩子函数（创建组件时，插入到页面上时，更新时，销毁时）
 
   // return a placeholder vnode
   var name = Ctor.options.name || tag;
@@ -3333,7 +3333,7 @@ function createComponentInstanceForVnode (
   }
   return new vnode.componentOptions.Ctor(options)
 }
-// data上添加节点在patch时的生命周期
+// 添加节点钩子周期（将在patch过程中调用）
 function installComponentHooks (data) {
   var hooks = data.hook || (data.hook = {});
   for (var i = 0; i < hooksToMerge.length; i++) {
@@ -3404,10 +3404,24 @@ function createElement (
   return _createElement(context, tag, data, children, normalizationType)
 }
 
+/**
+ * 
+ * @param {*} context 标签所在的组件
+ * @param {*} tag 标签名称
+ * @param {*} data 标签上的数据
+ * {
+ * attrs: {"name":value},属性:name="value"
+ * on: {test: getData },事件:@test="getData"
+ * directives:[{name:"test",rawName:"v-test:name.fale",value:(getName),expression:"getName",arg:"name",modifiers:{"fale":true}}],指令 v-test:name.fale='getName'
+ * model: {value:(name),callback:function ($$v) {name=$$v},expression:"name"},双向绑定:v-model
+ * }
+ * @param {*} children 子节点集合
+ * @param {*} normalizationType 标签类型
+ */
 function _createElement (
   context,
   tag,
-  data, //事件 { on: {test: function } }, 属性 attrs: {"name":value},指令{model:{value:(name),callback:function ($$v) {name=$$v},expression:"name"}}
+  data,
   children,
   normalizationType
 ) {
@@ -6618,13 +6632,12 @@ function createPatchFunction (backend) {
       }
     }
 
-    invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch);
+    invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch);// 调用insert钩子周期函数
     return vnode.elm
   }
 }
 
-/*  */
-
+/* 节点上指令的钩子函数 */
 var directives = {
   create: updateDirectives,
   update: updateDirectives,
@@ -6642,8 +6655,8 @@ function updateDirectives (oldVnode, vnode) {
 function _update (oldVnode, vnode) {
   var isCreate = oldVnode === emptyNode;
   var isDestroy = vnode === emptyNode;
-  var oldDirs = normalizeDirectives$1(oldVnode.data.directives, oldVnode.context);
-  var newDirs = normalizeDirectives$1(vnode.data.directives, vnode.context);
+  var oldDirs = normalizeDirectives$1(oldVnode.data.directives, oldVnode.context);// 旧标签节点上的指令数据集合（包含标签上的指令信息和指令定义）
+  var newDirs = normalizeDirectives$1(vnode.data.directives, vnode.context);// 新标签节点上的指令数据集合（包含标签上的指令信息和指令定义）
 
   var dirsWithInsert = [];
   var dirsWithPostpatch = [];
@@ -6652,16 +6665,16 @@ function _update (oldVnode, vnode) {
   for (key in newDirs) {
     oldDir = oldDirs[key];
     dir = newDirs[key];
-    if (!oldDir) {
+    if (!oldDir) {// 指令第一次绑定到元素上
       // new directive, bind
-      callHook$1(dir, 'bind', vnode, oldVnode);
+      callHook$1(dir, 'bind', vnode, oldVnode);// 调用bind钩子函数
       if (dir.def && dir.def.inserted) {
         dirsWithInsert.push(dir);
       }
     } else {
       // existing directive, update
-      dir.oldValue = oldDir.value;
-      dir.oldArg = oldDir.arg;
+      dir.oldValue = oldDir.value;// 更新指令的值
+      dir.oldArg = oldDir.arg;// 更新指令的参数（指令参数可动态变化）
       callHook$1(dir, 'update', vnode, oldVnode);
       if (dir.def && dir.def.componentUpdated) {
         dirsWithPostpatch.push(dir);
@@ -6714,17 +6727,17 @@ function normalizeDirectives$1 (
   var i, dir;
   for (i = 0; i < dirs.length; i++) {
     dir = dirs[i];
-    if (!dir.modifiers) {
+    if (!dir.modifiers) {// 没有修饰符
       // $flow-disable-line
       dir.modifiers = emptyModifiers;
     }
-    res[getRawDirName(dir)] = dir;
-    dir.def = resolveAsset(vm.$options, 'directives', dir.name, true);
+    res[getRawDirName(dir)] = dir;// 可能存在同名指令、但参数和修饰符不同
+    dir.def = resolveAsset(vm.$options, 'directives', dir.name, true);// 根据指令名称获取指令定义，并保存在标签指令数据上
   }
   // $flow-disable-line
   return res
 }
-
+//获取原始名称（包含前缀、参数、修饰符）
 function getRawDirName (dir) {
   return dir.rawName || ((dir.name) + "." + (Object.keys(dir.modifiers || {}).join('.')))
 }
@@ -8507,7 +8520,7 @@ var platformModules = [
 
 // the directive module should be applied last, after all
 // built-in modules have been applied.
-var modules = platformModules.concat(baseModules);// 指令的生命周期
+var modules = platformModules.concat(baseModules);// 节点上数据（指令、类型、事件等等）的钩子函数
 
 var patch = createPatchFunction({ nodeOps: nodeOps, modules: modules });
 
