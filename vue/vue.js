@@ -2207,7 +2207,9 @@ var normalizeEvent = cached(function (name) {
     passive: passive
   }
 });
-// 封装函数，将原始函数保存在封装函数的fns属性上。当原始函数发生变更时，只修改fns属性就可以。
+/* 
+ * 封装函数，将原始函数保存在封装函数的fns属性上。当原始函数发生变更时，只修改fns属性就可以
+ */
 function createFnInvoker (fns, vm) {
   function invoker () {
     var arguments$1 = arguments;
@@ -3147,10 +3149,11 @@ function mergeProps (to, from) {
 
 /*  */
 
-// 节点钩子周期，patch过程中节点初始、更新、销毁时触发
-// inline hooks to be invoked on component VNodes during patch
+/* 
+ *标签节点生命周期函数（patch调用）
+ */
 var componentVNodeHooks = {
-  init: function init (vnode, hydrating) {
+  init: function init (vnode, hydrating) {// 组件标签节点调用
     if (
       vnode.componentInstance &&
       !vnode.componentInstance._isDestroyed &&
@@ -3167,8 +3170,7 @@ var componentVNodeHooks = {
       child.$mount(hydrating ? vnode.elm : undefined, hydrating);
     }
   },
-  // patch之前触发
-  prepatch: function prepatch (oldVnode, vnode) {
+  prepatch: function prepatch (oldVnode, vnode) {// patch 之前触发
     var options = vnode.componentOptions;
     var child = vnode.componentInstance = oldVnode.componentInstance;
     updateChildComponent(
@@ -3180,12 +3182,12 @@ var componentVNodeHooks = {
     );
   },
 
-  insert: function insert (vnode) {
+  insert: function insert (vnode) {// 出入到父级DOM时调用
     var context = vnode.context;
     var componentInstance = vnode.componentInstance;
     if (!componentInstance._isMounted) {
       componentInstance._isMounted = true;
-      callHook(componentInstance, 'mounted');// 插入到DOM后触发
+      callHook(componentInstance, 'mounted');
     }
     if (vnode.data.keepAlive) {
       if (context._isMounted) {
@@ -3201,7 +3203,7 @@ var componentVNodeHooks = {
     }
   },
 
-  destroy: function destroy (vnode) {// 节点销毁钩子函数
+  destroy: function destroy (vnode) {// 节点销毁时调用
     var componentInstance = vnode.componentInstance;
     if (!componentInstance._isDestroyed) {
       if (!vnode.data.keepAlive) {// 是不是keep-alive中的缓存组件
@@ -6152,7 +6154,7 @@ function createPatchFunction (backend) {
     }
   }
 /**
- * // 添加标签属性，设置css作用域
+ * 添加标签属性，设置css作用域
  */  
   function setScope (vnode) {
     var i;
@@ -6646,7 +6648,9 @@ function createPatchFunction (backend) {
   }
 }
 
-/* 节点上指令的钩子函数 */
+/**
+ * 标签指令的生命周期函数
+ */
 var directives = {
   create: updateDirectives,
   update: updateDirectives,
@@ -6746,11 +6750,15 @@ function normalizeDirectives$1 (
   // $flow-disable-line
   return res
 }
-//获取原始名称（包含前缀、参数、修饰符）
+/*
+ * 获取原始名称（包含前缀、参数、修饰符）
+ */
 function getRawDirName (dir) {
   return dir.rawName || ((dir.name) + "." + (Object.keys(dir.modifiers || {}).join('.')))
 }
-
+/*
+ * 调用指令钩子函数（格式化钩子函数参数）
+ */
 function callHook$1 (dir, hook, vnode, oldVnode, isDestroy) {
   var fn = dir.def && dir.def[hook];
   if (fn) {
