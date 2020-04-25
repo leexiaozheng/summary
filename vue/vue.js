@@ -6055,8 +6055,8 @@ function createPatchFunction (backend) {
       // component also has set the placeholder vnode's elm.
       // in that case we can just return the element and be done.
       if (isDef(vnode.componentInstance)) {
-        initComponent(vnode, insertedVnodeQueue);// 初始化组件的设置
-        insert(parentElm, vnode.elm, refElm);// 将组件渲染后的标签添加到父标签中
+        initComponent(vnode, insertedVnodeQueue);// 组件初始化
+        insert(parentElm, vnode.elm, refElm);// 组件内标签生成的DOM添加到父级DOM中
         if (isTrue(isReactivated)) {
           reactivateComponent(vnode, insertedVnodeQueue, parentElm, refElm);
         }
@@ -6411,11 +6411,13 @@ function createPatchFunction (backend) {
       if (isDef(i = data.hook) && isDef(i = i.postpatch)) { i(oldVnode, vnode); }
     }
   }
-
+/**
+ * 调用insert钩子函数
+ */
   function invokeInsertHook (vnode, queue, initial) {
     // delay insert hooks for component root nodes, invoke them after the
     // element is really inserted
-    if (isTrue(initial) && isDef(vnode.parent)) {
+    if (isTrue(initial) && isDef(vnode.parent)) {// 组件内标签节点初次渲染，当前节点的Dom元素未添加到父级Dom元素中，所以先添加到父节点（组件节点）data中，之后再执行。
       vnode.parent.data.pendingInsert = queue;
     } else {
       for (var i = 0; i < queue.length; ++i) {
@@ -6589,7 +6591,7 @@ function createPatchFunction (backend) {
 
         // replacing existing element，替换已存在的元素
         var oldElm = oldVnode.elm;
-        var parentElm = nodeOps.parentNode(oldElm);// 获取父元素
+        var parentElm = nodeOps.parentNode(oldElm);// 获取父级DOM
 
         // create new node
         createElm(
@@ -6641,7 +6643,7 @@ function createPatchFunction (backend) {
       }
     }
 
-    invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch);// 调用insert钩子周期函数
+    invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch);// 调用insert钩子函数
     return vnode.elm
   }
 }
