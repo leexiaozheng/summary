@@ -3540,7 +3540,7 @@ function registerDeepBindings (data) {
 /*  */
 
 function initRender (vm) {
-  vm._vnode = null; // the root of the child tree
+  vm._vnode = null; // the root of the child tree组件内标签节点（根节点）
   vm._staticTrees = null; // v-once cached trees
   var options = vm.$options;
   var parentVnode = vm.$vnode = options._parentVnode; // the placeholder node in parent tree组件标签节点
@@ -4003,7 +4003,7 @@ function lifecycleMixin (Vue) {
     var prevEl = vm.$el;
     var prevVnode = vm._vnode;
     var restoreActiveInstance = setActiveInstance(vm);
-    vm._vnode = vnode;// 组件内标签节点
+    vm._vnode = vnode;// 组件内标签节点（根节点）
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
     if (!prevVnode) {// 组件初次渲染
@@ -4064,7 +4064,7 @@ function lifecycleMixin (Vue) {
     // call the last hook...
     vm._isDestroyed = true;
     // invoke destroy hooks on current rendered tree
-    vm.__patch__(vm._vnode, null);// 销毁组件节点
+    vm.__patch__(vm._vnode, null);// 销毁组件内标签节点
     // fire destroyed hook
     callHook(vm, 'destroyed');
     // turn off all instance listeners.
