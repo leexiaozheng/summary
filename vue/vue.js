@@ -8039,7 +8039,9 @@ function resolveTransition (def$$1) {
     return autoCssTransition(def$$1)
   }
 }
-
+/**
+ * 根据transition标签上的name生成样式类名
+ */
 var autoCssTransition = cached(function (name) {
   return {
     enterClass: (name + "-enter"),
@@ -8895,7 +8897,7 @@ var Transition = {
         ? (String(child.key).indexOf(id) === 0 ? child.key : id + child.key)
         : child.key;
 
-    var data = (child.data || (child.data = {})).transition = extractTransitionData(this);
+    var data = (child.data || (child.data = {})).transition = extractTransitionData(this);// 将组件标签上的数据添加组件标签内的子标签节点上
     var oldRawChild = this._vnode;
     var oldChild = getRealChild(oldRawChild);
 
