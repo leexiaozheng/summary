@@ -3182,7 +3182,7 @@ var componentVNodeHooks = {
     );
   },
 
-  insert: function insert (vnode) {// 出入到父级DOM时调用
+  insert: function insert (vnode) {// 插入到父级DOM时调用
     var context = vnode.context;
     var componentInstance = vnode.componentInstance;
     if (!componentInstance._isMounted) {
@@ -3957,7 +3957,7 @@ function eventsMixin (Vue) {
 
 /*  */
 
-var activeInstance = null;
+var activeInstance = null;// 当前正在更新的组件
 var isUpdatingChildComponent = false;
 
 function setActiveInstance(vm) {
@@ -3989,10 +3989,10 @@ function initLifecycle (vm) {
   vm.$children = [];
   vm.$refs = {};
 
-  vm._watcher = null;
+  vm._watcher = null;n
   vm._inactive = null;
   vm._directInactive = false;
-  vm._isMounted = false;
+  vm._isMounted = false;// 是否已经mounted
   vm._isDestroyed = false;
   vm._isBeingDestroyed = false;
 }
@@ -4147,7 +4147,7 @@ function mountComponent (
 
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
-  if (vm.$vnode == null) {
+  if (vm.$vnode == null) {// 根组件的$vnode为空
     vm._isMounted = true;
     callHook(vm, 'mounted');
   }
@@ -5920,7 +5920,8 @@ function createKeyToOldIdx (children, beginIdx, endIdx) {
 
 function createPatchFunction (backend) {
   var i, j;
-  var cbs = {};// 在节点的不同时期（插入到DOM，更新，销毁）对标签上的数据（事件）进行处理的函数集合
+  var cbs = {};// 在节点的不同时期（插入到DOM，更新，销毁）对标签上的数据（事件）进行处理的函数集合create:创建DOM或者组件，并且子节点已经插入
+
 
   var modules = backend.modules;
   var nodeOps = backend.nodeOps;// dom操作方法
