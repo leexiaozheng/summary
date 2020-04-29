@@ -1,6 +1,6 @@
 vue 功能划分
 
-1. 数据
+1. 数据（响应式）
 
     - data
     - props
@@ -25,6 +25,10 @@ vue 功能划分
 
 8. keep-alive
 
-9. 生命周期
+9. transition、transitionGroup
 
-10. vue 构造器方法
+10. 节点生命周期（节点渲染会做哪些事情）
+
+11. 生命周期
+
+12. vue 构造器方法
