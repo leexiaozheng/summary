@@ -796,7 +796,7 @@ var VNode = function VNode (
   this.parent = undefined;// 当节点是组件内根标签节点，保存它的组件标签节点
   this.raw = false;
   this.isStatic = false;
-  this.isRootInsert = true;
+  this.isRootInsert = true;// 节点对应的DOM元素是否是直接插入文档中
   this.isComment = false;
   this.isCloned = false;
   this.isOnce = false;
@@ -4189,7 +4189,7 @@ function updateChildComponent (
   );
 
   vm.$options._parentVnode = parentVnode;
-  vm.$vnode = parentVnode; // update vm's placeholder node without re-render
+  vm.$vnode = parentVnode; // update vm's placeholder node without re-render更新组件标签节点
 
   if (vm._vnode) { // update child tree's parent
     vm._vnode.parent = parentVnode;
@@ -5982,7 +5982,7 @@ function createPatchFunction (backend) {
     insertedVnodeQueue,
     parentElm,
     refElm,
-    nested,
+    nested,//是否是嵌套插入文档中（？不确定）
     ownerArray,
     index
   ) {
@@ -8086,7 +8086,7 @@ var raf = inBrowser
     : setTimeout
   : /* istanbul ignore next */ function (fn) { return fn(); };
 
-function nextFrame (fn) {
+function nextFrame (fn) { // ？为什么两帧
   raf(function () {
     raf(fn);
   });
@@ -8254,7 +8254,7 @@ function enter (vnode, toggleDisplay) {
   // <transition>'s parent for appear check.
   var context = activeInstance;
   var transitionNode = activeInstance.$vnode;
-  while (transitionNode && transitionNode.parent) {
+  while (transitionNode && transitionNode.parent) {// 向上查找不是组件根标签的祖先节点
     context = transitionNode.context;
     transitionNode = transitionNode.parent;
   }
@@ -8264,7 +8264,7 @@ function enter (vnode, toggleDisplay) {
   if (isAppear && !appear && appear !== '') {
     return
   }
-
+// 类名
   var startClass = isAppear && appearClass
     ? appearClass
     : enterClass;
@@ -8274,7 +8274,7 @@ function enter (vnode, toggleDisplay) {
   var toClass = isAppear && appearToClass
     ? appearToClass
     : enterToClass;
-
+// 钩子函数
   var beforeEnterHook = isAppear
     ? (beforeAppear || beforeEnter)
     : beforeEnter;
@@ -8337,7 +8337,7 @@ function enter (vnode, toggleDisplay) {
   if (expectsCSS) {
     addTransitionClass(el, startClass);
     addTransitionClass(el, activeClass);
-    nextFrame(function () {
+    nextFrame(function () {// 下一帧
       removeTransitionClass(el, startClass);
       if (!cb.cancelled) {
         addTransitionClass(el, toClass);
