@@ -8106,7 +8106,7 @@ function removeTransitionClass (el, cls) {
   }
   removeClass(el, cls);
 }
-
+// 回调函数将在动画结束时调用
 function whenTransitionEnds (
   el,
   expectedType,
@@ -8120,26 +8120,28 @@ function whenTransitionEnds (
   var event = type === TRANSITION ? transitionEndEvent : animationEndEvent;
   var ended = 0;
   var end = function () {
-    el.removeEventListener(event, onEnd);
-    cb();
+    el.removeEventListener(event, onEnd);// 取消监听
+    cb();// 执行回调函数
   };
   var onEnd = function (e) {
     if (e.target === el) {
-      if (++ended >= propCount) {
+      if (++ended >= propCount) {// 元素的所有动画是否都完成
         end();
       }
     }
   };
-  setTimeout(function () {
+  setTimeout(function () {// 根据动画时间判断是否结束
     if (ended < propCount) {
       end();
     }
   }, timeout + 1);
-  el.addEventListener(event, onEnd);
+  el.addEventListener(event, onEnd);// 监听动画结束事件
 }
 
 var transformRE = /\b(transform|all)(,|$)/;
-
+/**
+ * 获取元素transition/animation样式信息（类型、耗时、动画次数）
+ */
 function getTransitionInfo (el, expectedType) {
   var styles = window.getComputedStyle(el);
   // JSDOM may return undefined for transition properties
@@ -8189,10 +8191,12 @@ function getTransitionInfo (el, expectedType) {
     hasTransform: hasTransform
   }
 }
-
-function getTimeout (delays, durations) {
+/**
+ *  计算完成元素所有样式动画所需的最长时间
+ */ 
+function getTimeout (delays, durations) {// transition和animal可以设置多项（transition:width 2s,height 3s）
   /* istanbul ignore next */
-  while (delays.length < durations.length) {
+  while (delays.length < durations.length) {// 要么长度相同（长度不相同是因为设置了统一的延迟），要么延迟都相同
     delays = delays.concat(delays);
   }
 
@@ -8205,8 +8209,11 @@ function getTimeout (delays, durations) {
 // in a locale-dependent way, using a comma instead of a dot.
 // If comma is not replaced with a dot, the input will be rounded down (i.e. acting
 // as a floor function) causing unexpected behaviors
+/**
+ * 秒转化成毫秒
+ */
 function toMs (s) {
-  return Number(s.slice(0, -1).replace(',', '.')) * 1000
+  return Number(s.slice(0, -1).replace(',', '.')) * 1000// 
 }
 
 /*  */
@@ -8231,7 +8238,7 @@ function enter (vnode, toggleDisplay) {
   }
 
   var css = data.css;
-  var type = data.type;
+  var type = data.type;// 判断是transition还是animation
   var enterClass = data.enterClass;
   var enterToClass = data.enterToClass;
   var enterActiveClass = data.enterActiveClass;

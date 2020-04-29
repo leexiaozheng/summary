@@ -136,3 +136,6 @@ var Transition = {
   }
 };
 ```
+
+`window.getComputedStyle`
+> element.style 读取的只是元素的内联样式，即写在元素的 style 属性上的样式；而 getComputedStyle 读取的样式是最终样式，包括了内联样式、嵌入样式和外部样式。
