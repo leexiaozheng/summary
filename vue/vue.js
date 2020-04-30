@@ -8226,7 +8226,7 @@ function enter (vnode, toggleDisplay) {
     el._leaveCb.cancelled = true;
     el._leaveCb();
   }
-
+// 获取transition标签上的信息
   var data = resolveTransition(vnode.data.transition);
   if (isUndef(data)) {
     return
@@ -8308,7 +8308,7 @@ function enter (vnode, toggleDisplay) {
   var expectsCSS = css !== false && !isIE9;
   var userWantsControl = getHookArgumentsLength(enterHook);
 
-  var cb = el._enterCb = once(function () {
+  var cb = el._enterCb = once(function () {// 第一次调用后失效
     if (expectsCSS) {
       removeTransitionClass(el, toClass);
       removeTransitionClass(el, activeClass);
@@ -8373,7 +8373,7 @@ function leave (vnode, rm) {
   var el = vnode.elm;
 
   // call enter callback now
-  if (isDef(el._enterCb)) {
+  if (isDef(el._enterCb)) {// 针对afterEnterHook钩子还没调用的情况，将会触发enterCancelledHook钩子函数
     el._enterCb.cancelled = true;
     el._enterCb();
   }
@@ -8427,10 +8427,11 @@ function leave (vnode, rm) {
       }
       leaveCancelled && leaveCancelled(el);
     } else {
-      rm();
+      rm();// 移除DOM元素，会在本次宏任务执行完开始重新渲染
       afterLeave && afterLeave(el);
     }
     el._leaveCb = null;
+    
   });
 
   if (delayLeave) {
@@ -8441,7 +8442,7 @@ function leave (vnode, rm) {
 
   function performLeave () {
     // the delayed leave may have already been cancelled
-    if (cb.cancelled) {
+    if (cb.cancelled) {// 被取消了
       return
     }
     // record leaving element
@@ -8460,7 +8461,7 @@ function leave (vnode, rm) {
             if (isValidDuration(explicitLeaveDuration)) {
               setTimeout(cb, explicitLeaveDuration);
             } else {
-              whenTransitionEnds(el, type, cb);
+              whenTransitionEnds(el, type, cb);// 动画结束调用回调函数
             }
           }
         }
