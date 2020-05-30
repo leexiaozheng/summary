@@ -8245,15 +8245,15 @@ function enter (vnode, toggleDisplay) {
   var appearClass = data.appearClass;
   var appearToClass = data.appearToClass;
   var appearActiveClass = data.appearActiveClass;
-  var beforeEnter = data.beforeEnter;
-  var enter = data.enter;
-  var afterEnter = data.afterEnter;
-  var enterCancelled = data.enterCancelled;
-  var beforeAppear = data.beforeAppear;
-  var appear = data.appear;
-  var afterAppear = data.afterAppear;
-  var appearCancelled = data.appearCancelled;
-  var duration = data.duration;
+  var beforeEnter = data.beforeEnter;// 钩子函数
+  var enter = data.enter;// 钩子函数
+  var afterEnter = data.afterEnter;// 钩子函数
+  var enterCancelled = data.enterCancelled;// 钩子函数
+  var beforeAppear = data.beforeAppear;// 钩子函数
+  var appear = data.appear;// 钩子函数
+  var afterAppear = data.afterAppear;// 钩子函数
+  var appearCancelled = data.appearCancelled;// 钩子函数
+  var duration = data.duration;// 进入或移出的持续时间
 
   // activeInstance will always be the <transition> component managing this
   // transition. One edge case to check is when the <transition> is placed
