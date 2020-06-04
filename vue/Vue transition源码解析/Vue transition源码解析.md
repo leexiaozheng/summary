@@ -1,4 +1,7 @@
+1. 模板中transition标签会根据内建的transition组件选项创建组件实例。组件渲染成页面时调用render函数，获取标签内的
+
 ```javascript
+// 内建的transition组件选项
 var transitionProps = {
   name: String,
   appear: Boolean,
@@ -16,7 +19,7 @@ var transitionProps = {
   appearToClass: String,
   duration: [Number, String, Object]
 };
-
+/* transition组件选项 */
 var Transition = {
   name: 'transition',
   props: transitionProps,
@@ -136,6 +139,8 @@ var Transition = {
   }
 };
 ```
+
+
 
 `window.getComputedStyle`
 > element.style 读取的只是元素的内联样式，即写在元素的 style 属性上的样式；而 getComputedStyle 读取的样式是最终样式，包括了内联样式、嵌入样式和外部样式。

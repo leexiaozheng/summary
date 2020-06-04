@@ -8832,7 +8832,9 @@ function isSameChild (child, oldChild) {
 var isNotTextNode = function (c) { return c.tag || isAsyncPlaceholder(c); };
 
 var isVShowDirective = function (d) { return d.name === 'show'; };
-
+/**
+ * transition组件选项
+ */
 var Transition = {
   name: 'transition',
   props: transitionProps,
