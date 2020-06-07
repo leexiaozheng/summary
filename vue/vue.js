@@ -8784,6 +8784,9 @@ var transitionProps = {
 
 // in case the child is also an abstract component, e.g. <keep-alive>
 // we want to recursively retrieve the real component to be rendered
+/**
+ * 查找非抽象的子孙节点
+ */
 function getRealChild (vnode) {
   var compOptions = vnode && vnode.componentOptions;
   if (compOptions && compOptions.Ctor.options.abstract) {
@@ -8816,7 +8819,9 @@ function placeholder (h, rawChild) {
     })
   }
 }
-
+/**
+ * 父级是否存在transition这样的组件根标签
+ */
 function hasParentTransition (vnode) {
   while ((vnode = vnode.parent)) {
     if (vnode.data.transition) {
@@ -8924,13 +8929,13 @@ var Transition = {
       !isSameChild(child, oldChild) &&
       !isAsyncPlaceholder(oldChild) &&
       // #6687 component root is a comment node
-      !(oldChild.componentInstance && oldChild.componentInstance._vnode.isComment)
+      !(oldChild.componentInstance && oldChild.componentInstance._vnode.isComment)// 不是组件，或者不是根标签是注释标签的组件
     ) {
       // replace old child transition data with fresh one
       // important for dynamic transitions!
       var oldData = oldChild.data.transition = extend({}, data);
       // handle transition mode
-      if (mode === 'out-in') {
+      if (mode === 'out-in') {// 当前元素先进行过渡，完成之后新元素过渡进入
         // return placeholder node and queue update when leave finishes
         this._leaving = true;
         mergeVNodeHook(oldData, 'afterLeave', function () {
@@ -8938,7 +8943,7 @@ var Transition = {
           this$1.$forceUpdate();
         });
         return placeholder(h, rawChild)
-      } else if (mode === 'in-out') {
+      } else if (mode === 'in-out') {// 新元素先进行过渡，完成之后当前元素过渡离开
         if (isAsyncPlaceholder(child)) {
           return oldRawChild
         }

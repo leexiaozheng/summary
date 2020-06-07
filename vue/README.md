@@ -27,6 +27,8 @@ vue 功能划分
 
 9. transition、transitionGroup
 
+* in-out、out-in模式实现原理
+
 10. 节点生命周期（节点渲染会做哪些事情）
 
 11. 生命周期

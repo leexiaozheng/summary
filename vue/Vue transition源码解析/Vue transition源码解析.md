@@ -1,4 +1,4 @@
-1. 模板中transition标签会根据内建的transition组件选项创建组件实例。组件渲染成页面时调用render函数，获取标签内的
+1. 模板中transition标签会根据内建的transition组件选项创建组件实例。组件渲染成页面时调用render函数：获取transition组件的默认插槽，并将transition组件标签上的数据合并到默认插槽标签节点VNode上。
 
 ```javascript
 // 内建的transition组件选项
@@ -25,7 +25,7 @@ var Transition = {
   props: transitionProps,
   abstract: true,
 
-  render: function render (h) {
+  render: function render (h) {// 获取Vnode节点，h：createElement
     var this$1 = this;
 
     var children = this.$slots.default;
@@ -65,13 +65,13 @@ var Transition = {
 
     // if this is a component root node and the component's
     // parent container node also has transition, skip.
-    if (hasParentTransition(this.$vnode)) {
+    if (hasParentTransition(this.$vnode)) {// 父级是否存在transition这样的组件根标签
       return rawChild
     }
 
     // apply transition data to child
     // use getRealChild() to ignore abstract components e.g. keep-alive
-    var child = getRealChild(rawChild);
+    var child = getRealChild(rawChild);// 获取非抽象子节点
     /* istanbul ignore if */
     if (!child) {
       return rawChild
@@ -93,7 +93,7 @@ var Transition = {
         ? (String(child.key).indexOf(id) === 0 ? child.key : id + child.key)
         : child.key;
 
-    var data = (child.data || (child.data = {})).transition = extractTransitionData(this);
+    var data = (child.data || (child.data = {})).transition = extractTransitionData(this);// 将组件标签上的数据添加组件标签内的子标签节点上
     var oldRawChild = this._vnode;
     var oldChild = getRealChild(oldRawChild);
 
@@ -109,21 +109,21 @@ var Transition = {
       !isSameChild(child, oldChild) &&
       !isAsyncPlaceholder(oldChild) &&
       // #6687 component root is a comment node
-      !(oldChild.componentInstance && oldChild.componentInstance._vnode.isComment)
+      !(oldChild.componentInstance && oldChild.componentInstance._vnode.isComment)// 不是组件，或者不是根标签是注释标签的组件
     ) {
       // replace old child transition data with fresh one
       // important for dynamic transitions!
       var oldData = oldChild.data.transition = extend({}, data);
       // handle transition mode
-      if (mode === 'out-in') {
+      if (mode === 'out-in') {// 当前元素先进行过渡，完成之后新元素过渡进入
         // return placeholder node and queue update when leave finishes
         this._leaving = true;
-        mergeVNodeHook(oldData, 'afterLeave', function () {
+        mergeVNodeHook(oldData, 'afterLeave', function () {// 添加afterLeave回调函数
           this$1._leaving = false;
           this$1.$forceUpdate();
         });
         return placeholder(h, rawChild)
-      } else if (mode === 'in-out') {
+      } else if (mode === 'in-out') {// 新元素先进行过渡，完成之后当前元素过渡离开
         if (isAsyncPlaceholder(child)) {
           return oldRawChild
         }
