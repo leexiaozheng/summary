@@ -83,7 +83,7 @@ render: function render() {
 }
 ```
 
-4.缓存组件激活（节点 DOM 插入到页面）时，调用`activated`组件生命周期函数。当缓存组件标签切换，组件节点销毁时，由于组件节点标识 keepAlive 为 true，并不会调用\$destory 销毁组件，而是冻结组件并触发`deactivated`组件生命周期函数。
+4.缓存组件激活（节点 DOM 插入到页面）时，调用`activated`组件生命周期函数。当缓存组件标签切换，组件节点销毁时，由于组件节点标识 keepAlive 为 true，并不会调用\$destory 销毁组件，而是冻结组件并触发`deactivated`组件生命周期函数，同时将组件对应的DOM从文档中移除。
 
 ```javascript
 // 节点生命周期
@@ -157,7 +157,7 @@ function deactivateChildComponent (vm, direct) {
 }
 ```
 
-5.keep-alive 是通过 include 和 exclude 判断组件是否缓存。在 keep-alive 组件 mounted 生命周期函数中，通过组件内置的\$watch 方法监测测 include 和 exclude 值的变化，当发生变化时，根据变化后的值判断当前已经缓存的组件哪些不满足缓存条件，不满足缓存条件的清除组件缓存。通过 include 和 exclude 可以实现动态缓存，例如人员列表页面跳转到车辆列表页面不缓存，但是跳转到人员详情页缓存，就可以页面跳转前更改 include 或者 exclude 值，更新缓存条件，实现动态缓存。
+5.keep-alive 是通过 include 和 exclude 判断组件是否缓存。在 keep-alive 组件 mounted 生命周期函数中，通过组件内置的\$watch 方法监测 include 和 exclude 值的变化，当发生变化时，根据变化后的值判断当前已经缓存的组件哪些不满足缓存条件，不满足缓存条件的清除组件缓存。通过 include 和 exclude 可以实现动态缓存，例如人员列表页面跳转到车辆列表页面不缓存，但是跳转到人员详情页缓存，就可以页面跳转前更改 include 或者 exclude 值，更新缓存条件，实现动态缓存。
 
 ```javascript
 // keep-alive props
