@@ -781,7 +781,18 @@ var VNode = function VNode (
   asyncFactory
 ) {
   this.tag = tag;// 标签名
-  this.data = data;// 节点数据（原生事件信息），包括节点的钩子函数（包含标签上数据的钩子函数，例如：指令）
+  /**
+   * 标签上的数据（原生事件信息，包括节点的钩子函数，在节点的不同周期处理标签上的数据）
+   * init 创建组件
+   * create 创建DOM后
+   * insert 插入到文档后调用
+   * prepatch 更新组件数据propsData、listeners、children
+   * update 更新节点
+   * postpatch 节点更新完之后
+   * remove DOM从文档中移除前
+   * destory 销毁组件
+   */
+  this.data = data;// 
   this.children = children;// 当节点是原生标签节点，保存它的子节点
   this.text = text;// 为文本节点或者注释节点时的文本内容
   this.elm = elm;// 节点对应的DOM，组件节点则对应的是该组件内原生根标签DOM
@@ -815,7 +826,7 @@ prototypeAccessors.child.get = function () {
 
 Object.defineProperties( VNode.prototype, prototypeAccessors ); // 设置VNode节点的child属性配置
 
-var createEmptyVNode = function (text) {
+var createEmptyVNode = function (text) {// 组件模板为空时
   if ( text === void 0 ) text = '';
 
   var node = new VNode();
@@ -3608,6 +3619,7 @@ function renderMixin (Vue) {
       // separately from one another. Nested component's render fns are called
       // when parent component is patched.
       currentRenderingInstance = vm;
+      // 初始化组件模版为空时，会自动添加div标签，通过v-if删除组件根标签时会返回空节点
       vnode = render.call(vm._renderProxy, vm.$createElement);
     } catch (e) {
       handleError(e, vm, "render");
@@ -5763,7 +5775,7 @@ function createElement$1 (tagName, vnode) {
   }
   return elm
 }
-// 创建带有指定命名空间的元素节点
+// 创建带有指定命名空间的元素节点(命名空间用于标识该节点属于哪种XML类型。xml文档可能包含多个软件模块的元素和属性，在不同软件模块中使用相同名称的元素或属性，可能会导致识别和冲突问题，而xml命名空间可以解决该问题)
 function createElementNS (namespace, tagName) {
   return document.createElementNS(namespaceMap[namespace], tagName)
 }
@@ -5920,13 +5932,20 @@ function createKeyToOldIdx (children, beginIdx, endIdx) {
 
 function createPatchFunction (backend) {
   var i, j;
-  var cbs = {};// 在节点的不同时期（插入到DOM，更新，销毁）对标签上的数据（事件）进行处理的函数集合create:创建DOM或者组件，并且子节点已经插入
+  /* 在节点生命周期调用的方法的集合（处理节点标签上的各类属性）
+  'create',// 根据组件节点创建DOM后,插入到文档之前
+  'activate',//创建组件后，插入文档时，对transition组件调用
+  'update',// 相同节点更新时调用
+  'remove',// DOM从文档移除前调用
+  'destroy'// 销毁后调用
+  */
+  var cbs = {};
 
 
   var modules = backend.modules;
   var nodeOps = backend.nodeOps;// dom操作方法
 
-  for (i = 0; i < hooks.length; ++i) {
+  for (i = 0; i < hooks.length; ++i) { // ['create', 'activate', 'update', 'remove', 'destroy'] 组件节点钩子
     cbs[hooks[i]] = [];
     for (j = 0; j < modules.length; ++j) {
       if (isDef(modules[j][hooks[i]])) {
@@ -5941,7 +5960,7 @@ function createPatchFunction (backend) {
 
   function createRmCb (childElm, listeners) {
     function remove$$1 () {
-      if (--remove$$1.listeners === 0) {
+      if (--remove$$1.listeners === 0) {// 组件内节点所有的remove回调函数执行完之后再移除节点
         removeNode(childElm);
       }
     }
@@ -6049,7 +6068,7 @@ function createPatchFunction (backend) {
   function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     var i = vnode.data;
     if (isDef(i)) {
-      var isReactivated = isDef(vnode.componentInstance) && i.keepAlive;
+      var isReactivated = isDef(vnode.componentInstance) && i.keepAlive;// keepAlive组件
       if (isDef(i = i.hook) && isDef(i = i.init)) {
         i(vnode, false /* hydrating */);
       }
@@ -6097,7 +6116,7 @@ function createPatchFunction (backend) {
       innerNode = innerNode.componentInstance._vnode;
       if (isDef(i = innerNode.data) && isDef(i = i.transition)) {
         for (i = 0; i < cbs.activate.length; ++i) {
-          cbs.activate[i](emptyNode, innerNode);
+          cbs.activate[i](emptyNode, innerNode);// 依次调用activate方法集合处理标签属性数据
         }
         insertedVnodeQueue.push(innerNode);
         break
@@ -6142,16 +6161,16 @@ function createPatchFunction (backend) {
     return isDef(vnode.tag)
   }
 /**
-* 调用create钩子函数， 并将需要调用inserted钩子函数的节点添加insertedVnodeQueue队列中
+* 
 */
   function invokeCreateHooks (vnode, insertedVnodeQueue) {
     for (var i$1 = 0; i$1 < cbs.create.length; ++i$1) {
-      cbs.create[i$1](emptyNode, vnode);
+      cbs.create[i$1](emptyNode, vnode);// 依次调用create方法集合处理标签属性数据
     }
     i = vnode.data.hook; // Reuse variable
     if (isDef(i)) {
-      if (isDef(i.create)) { i.create(emptyNode, vnode); }
-      if (isDef(i.insert)) { insertedVnodeQueue.push(vnode); }
+      if (isDef(i.create)) { i.create(emptyNode, vnode); }// 调用节点create钩子函数
+      if (isDef(i.insert)) { insertedVnodeQueue.push(vnode); }// 如果当前节点存在insert钩子函数，则添加到insert钩子函数队列中
     }
   }
 /**
@@ -6190,8 +6209,8 @@ function createPatchFunction (backend) {
     var i, j;
     var data = vnode.data;
     if (isDef(data)) {
-      if (isDef(i = data.hook) && isDef(i = i.destroy)) { i(vnode); }// 调用节点销毁周期函数
-      for (i = 0; i < cbs.destroy.length; ++i) { cbs.destroy[i](vnode); }
+      if (isDef(i = data.hook) && isDef(i = i.destroy)) { i(vnode); }// 调用节点销毁钩子函数
+      for (i = 0; i < cbs.destroy.length; ++i) { cbs.destroy[i](vnode); }// // 依次调用destroy方法集合处理标签属性数据
     }
     if (isDef(i = vnode.children)) {
       for (j = 0; j < vnode.children.length; ++j) {
@@ -6217,24 +6236,24 @@ function createPatchFunction (backend) {
   function removeAndInvokeRemoveHook (vnode, rm) {
     if (isDef(rm) || isDef(vnode.data)) {
       var i;
-      var listeners = cbs.remove.length + 1;
+      var listeners = cbs.remove.length + 1;// 加1是因为还有data.hook.remove需要调用
       if (isDef(rm)) {
         // we have a recursively passed down rm callback
         // increase the listeners count
         rm.listeners += listeners;
       } else {
         // directly removing
-        rm = createRmCb(vnode.elm, listeners);
+        rm = createRmCb(vnode.elm, listeners);// 所有的remove钩子函数执行完毕后，移除节点DOM
       }
       // recursively invoke hooks on child component root node
       if (isDef(i = vnode.componentInstance) && isDef(i = i._vnode) && isDef(i.data)) {
         removeAndInvokeRemoveHook(i, rm);
       }
       for (i = 0; i < cbs.remove.length; ++i) {
-        cbs.remove[i](vnode, rm);
+        cbs.remove[i](vnode, rm);// // 依次调用remove方法集合处理标签属性数据
       }
       if (isDef(i = vnode.data.hook) && isDef(i = i.remove)) {
-        i(vnode, rm);
+        i(vnode, rm);// 调用节点remove钩子函数，再调用rm移除节点DOM
       } else {
         rm();
       }
@@ -6383,15 +6402,15 @@ function createPatchFunction (backend) {
 
     var i;
     var data = vnode.data;
-    if (isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {
+    if (isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {// 调用节点prepatch钩子函数
       i(oldVnode, vnode);
     }
 
     var oldCh = oldVnode.children;
     var ch = vnode.children;
     if (isDef(data) && isPatchable(vnode)) {
-      for (i = 0; i < cbs.update.length; ++i) { cbs.update[i](oldVnode, vnode); }
-      if (isDef(i = data.hook) && isDef(i = i.update)) { i(oldVnode, vnode); }
+      for (i = 0; i < cbs.update.length; ++i) { cbs.update[i](oldVnode, vnode); }// 依次调用update方法集合处理标签属性数据
+      if (isDef(i = data.hook) && isDef(i = i.update)) { i(oldVnode, vnode); }// 调用节点update钩子函数
     }
     if (isUndef(vnode.text)) {
       if (isDef(oldCh) && isDef(ch)) {
@@ -6411,7 +6430,7 @@ function createPatchFunction (backend) {
       nodeOps.setTextContent(elm, vnode.text);
     }
     if (isDef(data)) {
-      if (isDef(i = data.hook) && isDef(i = i.postpatch)) { i(oldVnode, vnode); }
+      if (isDef(i = data.hook) && isDef(i = i.postpatch)) { i(oldVnode, vnode); }// 调用节点postpatch钩子函数
     }
   }
 /**
@@ -6420,7 +6439,7 @@ function createPatchFunction (backend) {
   function invokeInsertHook (vnode, queue, initial) {
     // delay insert hooks for component root nodes, invoke them after the
     // element is really inserted
-    if (isTrue(initial) && isDef(vnode.parent)) {// 组件内标签节点初次渲染，当前节点的Dom元素未添加到父级Dom元素中，所以先添加到父节点（组件节点）data中，之后再执行。
+    if (isTrue(initial) && isDef(vnode.parent)) {// 组件内标签节点初次渲染，。
       vnode.parent.data.pendingInsert = queue;
     } else {
       for (var i = 0; i < queue.length; ++i) {
@@ -6546,7 +6565,7 @@ function createPatchFunction (backend) {
   }
 
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
-    if (isUndef(vnode)) {
+    if (isUndef(vnode)) {// 组件调用$destroy销毁时
       if (isDef(oldVnode)) { invokeDestroyHook(oldVnode); }
       return
     }
@@ -6559,12 +6578,12 @@ function createPatchFunction (backend) {
       isInitialPatch = true;
       createElm(vnode, insertedVnodeQueue);
     } else {
-      var isRealElement = isDef(oldVnode.nodeType);// 是否是DOM元素
+      var isRealElement = isDef(oldVnode.nodeType);// 是否是原生节点
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
         // patch existing root node
         patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly);
-      } else {
-        if (isRealElement) {
+      } else {// 旧节点是原生节点，或者新旧节点不相同
+        if (isRealElement) {// 旧节点是原生节点
           // mounting to a real element
           // check if this is server-rendered content and if we can perform
           // a successful hydration.
@@ -6610,24 +6629,24 @@ function createPatchFunction (backend) {
         // update parent placeholder node element, recursively
         if (isDef(vnode.parent)) {// 如果是组件内根标签节点
           var ancestor = vnode.parent;
-          var patchable = isPatchable(vnode);
+          var patchable = isPatchable(vnode);// 是否存在原生节点
           while (ancestor) {
             for (var i = 0; i < cbs.destroy.length; ++i) {
-              cbs.destroy[i](ancestor);
+              cbs.destroy[i](ancestor);// // 依次调用destroy方法集合处理标签属性数据
             }
-            ancestor.elm = vnode.elm;// 如果节点是组件内根标签节点，则保持该组件节点和根标签节点的elm一致
-            if (patchable) {
+            ancestor.elm = vnode.elm;// 组件节点和祖先根标签节点的elm一致
+            if (patchable) {// 存在原生节点
               for (var i$1 = 0; i$1 < cbs.create.length; ++i$1) {
-                cbs.create[i$1](emptyNode, ancestor);
+                cbs.create[i$1](emptyNode, ancestor);// // 依次调用create方法集合处理标签属性数据
               }
               // #6513
               // invoke insert hooks that may have been merged by create hooks.
               // e.g. for directives that uses the "inserted" hook.
-              var insert = ancestor.data.hook.insert;// 节点钩子函数
+              var insert = ancestor.data.hook.insert;
               if (insert.merged) {
                 // start at index 1 to avoid re-invoking component mounted hook
                 for (var i$2 = 1; i$2 < insert.fns.length; i$2++) {
-                  insert.fns[i$2]();
+                  insert.fns[i$2]();// 调用节点插入钩子函数
                 }
               }
             } else {
@@ -8113,9 +8132,9 @@ function whenTransitionEnds (
   cb
 ) {
   var ref = getTransitionInfo(el, expectedType);
-  var type = ref.type;
-  var timeout = ref.timeout;
-  var propCount = ref.propCount;
+  var type = ref.type;// 动画类型
+  var timeout = ref.timeout;// 动画时间
+  var propCount = ref.propCount;// 次数
   if (!type) { return cb() }
   var event = type === TRANSITION ? transitionEndEvent : animationEndEvent;
   var ended = 0;
@@ -8223,12 +8242,12 @@ function enter (vnode, toggleDisplay) {
 
   // call leave callback now
   if (isDef(el._leaveCb)) {
-    el._leaveCb.cancelled = true;
+    el._leaveCb.cancelled = true;// 终止leave状态
     el._leaveCb();
   }
 // 获取transition标签上的信息
   var data = resolveTransition(vnode.data.transition);
-  if (isUndef(data)) {
+  if (isUndef(data)) {// 无过渡动画
     return
   }
 
@@ -8237,7 +8256,7 @@ function enter (vnode, toggleDisplay) {
     return
   }
 
-  var css = data.css;
+  var css = data.css;// 是否通过css实现过渡
   var type = data.type;// 判断是transition还是animation
   var enterClass = data.enterClass;
   var enterToClass = data.enterToClass;
@@ -8250,10 +8269,10 @@ function enter (vnode, toggleDisplay) {
   var afterEnter = data.afterEnter;// 钩子函数
   var enterCancelled = data.enterCancelled;// 钩子函数
   var beforeAppear = data.beforeAppear;// 钩子函数
-  var appear = data.appear;// 钩子函数
+  var appear = data.appear;// 钩子函数(节点在初始渲染的过渡)
   var afterAppear = data.afterAppear;// 钩子函数
   var appearCancelled = data.appearCancelled;// 钩子函数
-  var duration = data.duration;// 进入或移出的持续时间
+  var duration = data.duration;// 进入的持续时间
 
   // activeInstance will always be the <transition> component managing this
   // transition. One edge case to check is when the <transition> is placed
@@ -8308,18 +8327,18 @@ function enter (vnode, toggleDisplay) {
   var expectsCSS = css !== false && !isIE9;
   var userWantsControl = getHookArgumentsLength(enterHook);
 
-  var cb = el._enterCb = once(function () {// 第一次调用后失效
+  var cb = el._enterCb = once(function () {// 动画结束后的回调，第一次调用后失效
     if (expectsCSS) {
-      removeTransitionClass(el, toClass);
-      removeTransitionClass(el, activeClass);
+      removeTransitionClass(el, toClass);// 移除toClass类名
+      removeTransitionClass(el, activeClass);// 移除active类名
     }
     if (cb.cancelled) {
       if (expectsCSS) {
         removeTransitionClass(el, startClass);
       }
-      enterCancelledHook && enterCancelledHook(el);
+      enterCancelledHook && enterCancelledHook(el);// 调用enter过程取消的钩子
     } else {
-      afterEnterHook && afterEnterHook(el);
+      afterEnterHook && afterEnterHook(el);// 调用afterEnter钩子
     }
     el._enterCb = null;
   });
@@ -8340,19 +8359,19 @@ function enter (vnode, toggleDisplay) {
   }
 
   // start enter transition
-  beforeEnterHook && beforeEnterHook(el);
+  beforeEnterHook && beforeEnterHook(el);// 在插入文档之前调用beforeEnter钩子
   if (expectsCSS) {
-    addTransitionClass(el, startClass);
-    addTransitionClass(el, activeClass);
+    addTransitionClass(el, startClass);// 添加enter类名，在插入到文档后移除
+    addTransitionClass(el, activeClass);// 添加active类名在
     nextFrame(function () {// 下一帧
-      removeTransitionClass(el, startClass);
-      if (!cb.cancelled) {
-        addTransitionClass(el, toClass);
+      removeTransitionClass(el, startClass);// 移除enter类名
+      if (!cb.cancelled) {// 当进入leave状态，cb将会被取消
+        addTransitionClass(el, toClass);// 插入到文档后添加enterTo类名
         if (!userWantsControl) {
           if (isValidDuration(explicitEnterDuration)) {
             setTimeout(cb, explicitEnterDuration);
           } else {
-            whenTransitionEnds(el, type, cb);
+            whenTransitionEnds(el, type, cb);// 动画结束后调用cb
           }
         }
       }
@@ -8373,7 +8392,7 @@ function leave (vnode, rm) {
   var el = vnode.elm;
 
   // call enter callback now
-  if (isDef(el._enterCb)) {// 针对afterEnterHook钩子还没调用的情况，将会触发enterCancelledHook钩子函数
+  if (isDef(el._enterCb)) {// 终止enter状态，针对afterEnterHook钩子还没调用的情况，将会触发enterCancelledHook钩子函数
     el._enterCb.cancelled = true;
     el._enterCb();
   }
@@ -8449,17 +8468,17 @@ function leave (vnode, rm) {
     if (!vnode.data.show && el.parentNode) {
       (el.parentNode._pending || (el.parentNode._pending = {}))[(vnode.key)] = vnode;
     }
-    beforeLeave && beforeLeave(el);
+    beforeLeave && beforeLeave(el);// 调用beforeLeave钩子函数
     if (expectsCSS) {
-      addTransitionClass(el, leaveClass);
-      addTransitionClass(el, leaveActiveClass);
-      nextFrame(function () {
-        removeTransitionClass(el, leaveClass);
+      addTransitionClass(el, leaveClass);// 添加leave类名
+      addTransitionClass(el, leaveActiveClass)// 添加leaveActive类名
+      nextFrame(function () {//
+        removeTransitionClass(el, leaveClass);// 在下一帧移除leave类名
         if (!cb.cancelled) {
-          addTransitionClass(el, leaveToClass);
+          addTransitionClass(el, leaveToClass);// 在下一帧添加leaveToClass类名
           if (!userWantsControl) {
-            if (isValidDuration(explicitLeaveDuration)) {
-              setTimeout(cb, explicitLeaveDuration);
+            if (isValidDuration(explicitLeaveDuration)) {// 动画完成后或者设定的持续时间完成后移除leaveTo和leaveActive类名，最后dom从document移除
+              setTimeout(cb, explicitLeaveDuration);// 在用户设定的持续时间后调用回调函数
             } else {
               whenTransitionEnds(el, type, cb);// 动画结束调用回调函数
             }
@@ -8525,14 +8544,14 @@ function _enter (_, vnode) {
 }
 
 var transition = inBrowser ? {
-  create: _enter,
-  activate: _enter,
-  remove: function remove$$1 (vnode, rm) {
+  create: _enter,// 创建dom后调用
+  activate: _enter,// 创建组件后，且是transition组件根标签节点时
+  remove: function remove$$1 (vnode, rm) {// 从文档移除前调用
     /* istanbul ignore else */
     if (vnode.data.show !== true) {
       leave(vnode, rm);
     } else {
-      rm();
+      rm();// 从文档中移除
     }
   }
 } : {};
