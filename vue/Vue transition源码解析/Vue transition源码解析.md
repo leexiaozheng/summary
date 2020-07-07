@@ -1,4 +1,10 @@
-1. 模板中transition标签会根据内建的transition组件选项创建组件实例。组件渲染成页面时调用render函数，获取transition组件标签内的标签对应的节点（默认插槽），并将transition组件标签上的数据合并到该节点VNode上。
+1. 模板中transition标签会根据内建的transition组件选项创建组件实例。组件渲染成页面时调用render函数，获取transition标签内的标签对应的节点（插槽），并将transition组件标签上的数据合并到该节点VNode上。
+
+> 如果祖先（包括当前transition标签）都是根标签，且并存在它是transition标签内的标签（插槽）时，直接跳过当前的transition。
+
+> mode值为out-in（当前元素先进行过渡，完成之后新元素过渡进入），当transition标签内组件切换时，直接返回空文本节点，来替换旧组件节点，旧节点移除时完成leave动画后，强制更新transition组件，新组件开始插入，并开始enter动画。
+
+> mode值为in-out（新元素先进行过渡，完成之后当前元素过渡离开），当transition标签内组件切换时，为旧组件节点添加delayLeave钩子（钩子用来开始节点的leave动画），当新节点完成enter动画后，再执行旧节点的performLeave，开始旧节点的leave动画，最后从document中移除旧节点。
 
 ```javascript
 // 内建的transition组件选项
@@ -65,15 +71,16 @@ var Transition = {
 
     // if this is a component root node and the component's
     // parent container node also has transition, skip.
-    if (hasParentTransition(this.$vnode)) {// 父级是否存在transition这样的组件根标签
+    // 如果祖先都是根标签,且正好是transition组件标签内的标签（插槽）时，直接跳过当前的transition
+    if (hasParentTransition(this.$vnode)) {
       return rawChild
     }
 
     // apply transition data to child
     // use getRealChild() to ignore abstract components e.g. keep-alive
-    var child = getRealChild(rawChild);// 获取非抽象子节点
+    var child = getRealChild(rawChild);
     /* istanbul ignore if */
-    if (!child) {// 都是抽象节点
+    if (!child) {//如果没有原生标签节点
       return rawChild
     }
 
@@ -109,7 +116,7 @@ var Transition = {
       !isSameChild(child, oldChild) &&
       !isAsyncPlaceholder(oldChild) &&
       // #6687 component root is a comment node
-      !(oldChild.componentInstance && oldChild.componentInstance._vnode.isComment)// 组件根标签不是注释节点
+      !(oldChild.componentInstance && oldChild.componentInstance._vnode.isComment)// 不是组件，或者不是只含注释标签的组件
     ) {
       // replace old child transition data with fresh one
       // important for dynamic transitions!
@@ -118,20 +125,20 @@ var Transition = {
       if (mode === 'out-in') {// 当前元素先进行过渡，完成之后新元素过渡进入
         // return placeholder node and queue update when leave finishes
         this._leaving = true;
-        mergeVNodeHook(oldData, 'afterLeave', function () {// 添加afterLeave回调函数
+        mergeVNodeHook(oldData, 'afterLeave', function () {// 添加afterLeave回调函数，旧节点动画完成后，再更新组件，重新渲染
           this$1._leaving = false;
           this$1.$forceUpdate();
         });
-        return placeholder(h, rawChild)
+        return placeholder(h, rawChild)// 移除旧节点，替换为空的文本节点
       } else if (mode === 'in-out') {// 新元素先进行过渡，完成之后当前元素过渡离开
         if (isAsyncPlaceholder(child)) {
           return oldRawChild
         }
         var delayedLeave;
         var performLeave = function () { delayedLeave(); };
-        mergeVNodeHook(data, 'afterEnter', performLeave);
-        mergeVNodeHook(data, 'enterCancelled', performLeave);
-        mergeVNodeHook(oldData, 'delayLeave', function (leave) { delayedLeave = leave; });
+        mergeVNodeHook(data, 'afterEnter', performLeave);// 在enter动画完成之后开始调用performLeave，开始leave动画
+        mergeVNodeHook(data, 'enterCancelled', performLeave);// 在enter动画过程中取消后开始调用performLeave，开始leave动画
+        mergeVNodeHook(oldData, 'delayLeave', function (leave) { delayedLeave = leave; });// 更改旧节点的leave动画的执行时机，延迟从document移除的时间
       }
     }
 
@@ -159,7 +166,7 @@ var transition = inBrowser ? {
 
 3. 在enter方法中，创建dom、插入到document之前，添加enter和enterActive类名、调用对应的钩子。插入到文档后移除enter类名，添加enterTo类名。动画完成后，移除enterTo和enterActive类名。
 
-![](./进入过渡图示.png)
+![进入过渡图示](./进入过渡图示.png)
 
 ```javascript
 
@@ -293,7 +300,7 @@ function enter (vnode, toggleDisplay) {
 
 4. leave方法中，dom从document移除之前，添加leave和leaveActive类名，以及对应的钩子。在下一帧移除leave类名，添加leaveTo类名。动画完成后移除leaveTo和leaveActive类名，然后dom从document中移除。
 
-![](./离开过渡图示.png)
+![离开过渡图示](./离开过渡图示.png)
 
 ```javascript
 function leave (vnode, rm) {
@@ -324,7 +331,7 @@ function leave (vnode, rm) {
   var leave = data.leave;
   var afterLeave = data.afterLeave;
   var leaveCancelled = data.leaveCancelled;
-  var delayLeave = data.delayLeave;
+  var delayLeave = data.delayLeave;// mode为in-out时存在
   var duration = data.duration;
 
   var expectsCSS = css !== false && !isIE9;
@@ -362,7 +369,7 @@ function leave (vnode, rm) {
   });
 
   if (delayLeave) {
-    delayLeave(performLeave);
+    delayLeave(performLeave);// 延迟执行performLeave（mode为in-out时，在新节点enter动画完成时执行performLeave，开始leave动画）
   } else {
     performLeave();
   }

@@ -6233,7 +6233,7 @@ function createPatchFunction (backend) {
     }
   }
 
-  function removeAndInvokeRemoveHook (vnode, rm) {
+  function removeAndInvokeRemoveHook (vnode, rm) {// 当cbs上所有的remove方法和data.hook.remove钩子都执行完成，在从document中移除
     if (isDef(rm) || isDef(vnode.data)) {
       var i;
       var listeners = cbs.remove.length + 1;// 加1是因为还有data.hook.remove需要调用
@@ -8416,7 +8416,7 @@ function leave (vnode, rm) {
   var leave = data.leave;
   var afterLeave = data.afterLeave;
   var leaveCancelled = data.leaveCancelled;
-  var delayLeave = data.delayLeave;
+  var delayLeave = data.delayLeave;// mode为in-out时存在
   var duration = data.duration;
 
   var expectsCSS = css !== false && !isIE9;
@@ -8454,7 +8454,7 @@ function leave (vnode, rm) {
   });
 
   if (delayLeave) {
-    delayLeave(performLeave);
+    delayLeave(performLeave);// 延迟执行performLeave（mode为in-out时，在新节点enter动画完成时执行performLeave，开始leave动画）
   } else {
     performLeave();
   }
@@ -8839,7 +8839,7 @@ function placeholder (h, rawChild) {
   }
 }
 /**
- * 父级是否存在transition这样的组件根标签
+ * 祖先都是根标签,直到且正好是transition组件标签内的标签（插槽）时，返回true
  */
 function hasParentTransition (vnode) {
   while ((vnode = vnode.parent)) {
@@ -8864,7 +8864,7 @@ var Transition = {
   props: transitionProps,
   abstract: true,
 
-  render: function render (h) {
+  render: function render (h) {// 获取Vnode节点，h：createElement
     var this$1 = this;
 
     var children = this.$slots.default;
@@ -8873,7 +8873,7 @@ var Transition = {
     }
 
     // filter out text nodes (possible whitespaces)
-    children = children.filter(isNotTextNode);
+    children = children.filter(isNotTextNode);// 过滤文本节点
     /* istanbul ignore if */
     if (!children.length) {
       return
@@ -8904,6 +8904,7 @@ var Transition = {
 
     // if this is a component root node and the component's
     // parent container node also has transition, skip.
+    // 如果祖先都是根标签,且正好是transition组件标签内的标签（插槽）时，直接跳过当前的transition
     if (hasParentTransition(this.$vnode)) {
       return rawChild
     }
@@ -8912,7 +8913,7 @@ var Transition = {
     // use getRealChild() to ignore abstract components e.g. keep-alive
     var child = getRealChild(rawChild);
     /* istanbul ignore if */
-    if (!child) {
+    if (!child) {//如果没有原生标签节点
       return rawChild
     }
 
@@ -8932,7 +8933,7 @@ var Transition = {
         ? (String(child.key).indexOf(id) === 0 ? child.key : id + child.key)
         : child.key;
 
-    var data = (child.data || (child.data = {})).transition = extractTransitionData(this);// 将组件标签上的数据添加组件标签内的子标签节点上
+    var data = (child.data || (child.data = {})).transition = extractTransitionData(this);// 将transition标签上的数据添加到子标签节点data.transition上
     var oldRawChild = this._vnode;
     var oldChild = getRealChild(oldRawChild);
 
@@ -8948,7 +8949,7 @@ var Transition = {
       !isSameChild(child, oldChild) &&
       !isAsyncPlaceholder(oldChild) &&
       // #6687 component root is a comment node
-      !(oldChild.componentInstance && oldChild.componentInstance._vnode.isComment)// 不是组件，或者不是根标签是注释标签的组件
+      !(oldChild.componentInstance && oldChild.componentInstance._vnode.isComment)// 不是组件，或者不是只含注释标签的组件
     ) {
       // replace old child transition data with fresh one
       // important for dynamic transitions!
@@ -8957,20 +8958,20 @@ var Transition = {
       if (mode === 'out-in') {// 当前元素先进行过渡，完成之后新元素过渡进入
         // return placeholder node and queue update when leave finishes
         this._leaving = true;
-        mergeVNodeHook(oldData, 'afterLeave', function () {
+        mergeVNodeHook(oldData, 'afterLeave', function () {// 添加afterLeave回调函数，旧节点动画完成后，再更新组件，重新渲染
           this$1._leaving = false;
           this$1.$forceUpdate();
         });
-        return placeholder(h, rawChild)
+        return placeholder(h, rawChild)// 移除旧节点，替换为空的文本节点
       } else if (mode === 'in-out') {// 新元素先进行过渡，完成之后当前元素过渡离开
         if (isAsyncPlaceholder(child)) {
           return oldRawChild
         }
         var delayedLeave;
         var performLeave = function () { delayedLeave(); };
-        mergeVNodeHook(data, 'afterEnter', performLeave);
-        mergeVNodeHook(data, 'enterCancelled', performLeave);
-        mergeVNodeHook(oldData, 'delayLeave', function (leave) { delayedLeave = leave; });
+        mergeVNodeHook(data, 'afterEnter', performLeave);// 在enter动画完成之后开始调用performLeave，开始leave动画
+        mergeVNodeHook(data, 'enterCancelled', performLeave);// 在enter动画过程中取消后开始调用performLeave，开始leave动画
+        mergeVNodeHook(oldData, 'delayLeave', function (leave) { delayedLeave = leave; });// 更改旧节点的leave动画的执行时机，延迟从document移除的时间
       }
     }
 
@@ -9012,18 +9013,18 @@ var TransitionGroup = {
   render: function render (h) {
     var tag = this.tag || this.$vnode.data.tag || 'span';
     var map = Object.create(null);
-    var prevChildren = this.prevChildren = this.children;
-    var rawChildren = this.$slots.default || [];
+    var prevChildren = this.prevChildren = this.children;// 上一次组件标签内的标签节点（插槽）
+    var rawChildren = this.$slots.default || [];// 当前组件标签内的标签节点（插槽）
     var children = this.children = [];
-    var transitionData = extractTransitionData(this);
+    var transitionData = extractTransitionData(this);// 获取标签上的属性
 
     for (var i = 0; i < rawChildren.length; i++) {
       var c = rawChildren[i];
       if (c.tag) {
         if (c.key != null && String(c.key).indexOf('__vlist') !== 0) {
           children.push(c);
-          map[c.key] = c
-          ;(c.data || (c.data = {})).transition = transitionData;
+          map[c.key] = c// 当前组件标签内的标签节点的key映射
+          ;(c.data || (c.data = {})).transition = transitionData;// 将标签上的属性保存在插槽节点上
         } else if (process.env.NODE_ENV !== 'production') {
           var opts = c.componentOptions;
           var name = opts ? (opts.Ctor.options.name || opts.tag || '') : c.tag;
@@ -9040,12 +9041,12 @@ var TransitionGroup = {
         c$1.data.transition = transitionData;
         c$1.data.pos = c$1.elm.getBoundingClientRect();
         if (map[c$1.key]) {
-          kept.push(c$1);
+          kept.push(c$1);//本次中在上一次出现过的插槽节点
         } else {
-          removed.push(c$1);
+          removed.push(c$1);//本次中未出现上一次的插槽节点
         }
       }
-      this.kept = h(tag, null, kept);
+      this.kept = h(tag, null, kept);// 根据上一次也出现过的插槽节点生成组件渲染节点
       this.removed = removed;
     }
 
