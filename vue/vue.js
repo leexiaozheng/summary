@@ -8998,15 +8998,15 @@ var TransitionGroup = {
     this._update = function (vnode, hydrating) {
       var restoreActiveInstance = setActiveInstance(this$1);
       // force removing pass
-      this$1.__patch__(
-        this$1._vnode,
-        this$1.kept,
+      this$1.__patch__(// 移除当前不存在的旧标签
+        this$1._vnode,// 旧标签
+        this$1.kept,// 当前保留的旧标签
         false, // hydrating
         true // removeOnly (!important, avoids unnecessary moves)
       );
       this$1._vnode = this$1.kept;
       restoreActiveInstance();
-      update.call(this$1, vnode, hydrating);
+      update.call(this$1, vnode, hydrating);// 添加当前新增的标签,并调整节点的顺序
     };
   },
 
@@ -9053,7 +9053,7 @@ var TransitionGroup = {
     return h(tag, null, children)
   },
 
-  updated: function updated () {
+  updated: function updated () {// 此时位置已经完成了更新
     var children = this.prevChildren;
     var moveClass = this.moveClass || ((this.name || 'v') + '-move');
     if (!children.length || !this.hasMove(children[0].elm, moveClass)) {
@@ -9064,7 +9064,7 @@ var TransitionGroup = {
     // in each iteration - which helps prevent layout thrashing.
     children.forEach(callPendingCbs);
     children.forEach(recordPosition);
-    children.forEach(applyTranslation);
+    children.forEach(applyTranslation);// 从当前位置移动到之前位置
 
     // force reflow to put everything in position
     // assign to this to avoid being removed in tree-shaking
@@ -9075,8 +9075,8 @@ var TransitionGroup = {
       if (c.data.moved) {
         var el = c.elm;
         var s = el.style;
-        addTransitionClass(el, moveClass);
-        s.transform = s.WebkitTransform = s.transitionDuration = '';
+        addTransitionClass(el, moveClass);// 添加类名开始动画
+        s.transform = s.WebkitTransform = s.transitionDuration = '';// 再从之前位置移动到当前位置
         el.addEventListener(transitionEndEvent, el._moveCb = function cb (e) {
           if (e && e.target !== el) {
             return
@@ -9084,7 +9084,7 @@ var TransitionGroup = {
           if (!e || /transform$/.test(e.propertyName)) {
             el.removeEventListener(transitionEndEvent, cb);
             el._moveCb = null;
-            removeTransitionClass(el, moveClass);
+            removeTransitionClass(el, moveClass);// 动画完成移除类名
           }
         });
       }
@@ -9106,11 +9106,11 @@ var TransitionGroup = {
       // transition at this very moment, we make a clone of it and remove
       // all other transition classes applied to ensure only the move class
       // is applied.
-      var clone = el.cloneNode();
-      if (el._transitionClasses) {
+      var clone = el.cloneNode();// 通过clone并添加到document中获取dom样式属性
+      if (el._transitionClasses) {// 移除transition类名
         el._transitionClasses.forEach(function (cls) { removeClass(clone, cls); });
       }
-      addClass(clone, moveClass);
+      addClass(clone, moveClass);// 添加类名
       clone.style.display = 'none';
       this.$el.appendChild(clone);
       var info = getTransitionInfo(clone);
