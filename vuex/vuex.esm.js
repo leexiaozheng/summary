@@ -872,7 +872,7 @@ var mapMutations = normalizeNamespace(function (namespace, mutations) {
     console.error('[vuex] mapMutations: mapper parameter must be either an Array or an Object');
   }
   normalizeMap(mutations).forEach(function (ref) {
-    var key = ref.key;
+    var key = ref.key;// 重命名
     var val = ref.val;
 
     res[key] = function mappedMutation () {
