@@ -1,0 +1,1 @@
+presets: 将代码中某版本的js编译成es5（babel-preset-es2015将es6语法中的代码转换成es5版本）
