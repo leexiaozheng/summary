@@ -798,8 +798,8 @@ var VNode = function VNode (
   this.elm = elm;// 节点对应的DOM，组件节点则对应的是该组件内原生根标签DOM
   this.ns = undefined;
   this.context = context;// 节点对应标签所在的组件（组件内包含该标签）
-  this.fnContext = undefined;
-  this.fnOptions = undefined;
+  this.fnContext = undefined;// 组件节点对应的实例
+  this.fnOptions = undefined;// 组件节点对应的组件选项
   this.fnScopeId = undefined;
   this.key = data && data.key;// key值
   this.componentOptions = componentOptions;// { Ctor: 组件构造器, propsData: 组件标签属性数据, listeners: 组件标签事件, tag: 组件标识标签, children: 插槽}缓存组件标签信息：包括组件名称，组件选项、标签上的props、标签上的事件、以及组件标签内的子节点。
@@ -3108,7 +3108,7 @@ function createFunctionalComponent (
     if (isDef(data.props)) { mergeProps(props, data.props); }
   }
 
-  var renderContext = new FunctionalRenderContext(
+  var renderContext = new FunctionalRenderContext(// 渲染的上下文（根据当前组件选项创建的上下文）
     data,
     props,
     children,
@@ -3119,7 +3119,7 @@ function createFunctionalComponent (
   var vnode = options.render.call(null, renderContext._c, renderContext);
 
   if (vnode instanceof VNode) {
-    return cloneAndMarkFunctionalResult(vnode, data, renderContext.parent, options, renderContext)
+    return cloneAndMarkFunctionalResult(vnode, data, renderContext.parent, options, renderContext)// 克隆节点并返回（设置fnContext属性指向组件实例，fnOption属性指向组件选项）
   } else if (Array.isArray(vnode)) {
     var vnodes = normalizeChildren(vnode) || [];
     var res = new Array(vnodes.length);
@@ -3293,7 +3293,7 @@ function createComponent (
   var propsData = extractPropsFromVNodeData(data, Ctor, tag);
 
   // functional component
-  if (isTrue(Ctor.options.functional)) {
+  if (isTrue(Ctor.options.functional)) {// 例如router-view组件
     return createFunctionalComponent(Ctor, propsData, data, context, children)
   }
 
@@ -4001,7 +4001,7 @@ function initLifecycle (vm) {
   vm.$children = [];
   vm.$refs = {};
 
-  vm._watcher = null;n
+  vm._watcher = null;
   vm._inactive = null;
   vm._directInactive = false;
   vm._isMounted = false;// 是否已经mounted

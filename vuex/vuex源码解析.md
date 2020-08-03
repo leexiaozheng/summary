@@ -173,7 +173,7 @@ function installModule (store, rootState, path, module, hot) {
 }
 ```
 
-5. 利用Vue响应式以及computed属性实现vuex的state响应式和getter功能。在store严格模式下，当不通过commit修改state值时，输出警告提示。
+5. resetStoreVM。利用Vue响应式以及computed属性实现vuex的state响应式和getter功能。在store严格模式下，当不通过commit修改state值时，输出警告提示。
 
 > 定义store.getters对象属性的get方法，代理访问存在store._vm组件实例上数据。
 
