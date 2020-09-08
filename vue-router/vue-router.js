@@ -117,14 +117,14 @@
           (val && current !== vm) ||
           (!val && current === vm)
         ) {
-          matched.instances[name] = val;
+          matched.instances[name] = val;// 保存组件实例
         }
       }
 
       // also register instance in prepatch hook
       // in case the same component instance is reused across different routes
       ;(data.hook || (data.hook = {})).prepatch = function (_, vnode) {
-        matched.instances[name] = vnode.componentInstance;
+        matched.instances[name] = vnode.componentInstance;// 保存组件实例
       };
 
       // register instance in init hook
@@ -134,7 +134,7 @@
           vnode.componentInstance &&
           vnode.componentInstance !== matched.instances[name]
         ) {
-          matched.instances[name] = vnode.componentInstance;
+          matched.instances[name] = vnode.componentInstance;// 更新组件实例
         }
       };
 
@@ -204,7 +204,7 @@
     .replace(commaRE, ','); };
 
   var decode = decodeURIComponent;
-
+// 解析路由参数（query），并合并当前路由参数（extraQuery）
   function resolveQuery (
     query,
     extraQuery,
@@ -311,7 +311,7 @@
       query: query,
       params: location.params || {},
       fullPath: getFullPath(location, stringifyQuery),
-      matched: record ? formatMatch(record) : []
+      matched: record ? formatMatch(record) : []// 从根路由到该路由上的路由信息
     };
     if (redirectedFrom) {
       route.redirectedFrom = getFullPath(redirectedFrom, stringifyQuery);
@@ -961,7 +961,7 @@
     }
   }
 
-  /* 格式化新路由（路径、参数、hash） */
+  /* 格式化路由（路径、参数、hash） */
 
   function normalizeLocation (
     raw,
@@ -999,16 +999,16 @@
       return next
     }
 
-    var parsedPath = parsePath(next.path || '');
+    var parsedPath = parsePath(next.path || '');// 返回路径、参数、hash
     var basePath = (current && current.path) || '/';
     var path = parsedPath.path
       ? resolvePath(parsedPath.path, basePath, append || next.append)
       : basePath;
 
-    var query = resolveQuery(
+    var query = resolveQuery(// 路由参数解析合并
       parsedPath.query,
       next.query,
-      router && router.options.parseQuery
+      router && router.options.parseQuery// 解析函数
     );
 
     var hash = next.hash || parsedPath.hash;
@@ -1296,7 +1296,7 @@
     // ensure wildcard routes are always at the end
     for (var i = 0, l = pathList.length; i < l; i++) {
       if (pathList[i] === '*') {
-        pathList.push(pathList.splice(i, 1)[0]);
+        pathList.push(pathList.splice(i, 1)[0]);// 通配符路由移到最后
         l--;
         i--;
       }
@@ -1402,7 +1402,7 @@
     }
 
     if (route.alias !== undefined) {
-      var aliases = Array.isArray(route.alias) ? route.alias : [route.alias];
+      var aliases = Array.isArray(route.alias) ? route.alias : [route.alias];// 别名
       for (var i = 0; i < aliases.length; ++i) {
         var alias = aliases[i];
         if ( alias === path) {
@@ -1418,7 +1418,7 @@
           path: alias,
           children: route.children
         };
-        addRouteRecord(
+        addRouteRecord(// 为别名重新添加一条记录
           pathList,
           pathMap,
           nameMap,
@@ -1481,7 +1481,7 @@
     routes,// 路由配置
     router// VueRouter实例
   ) {
-    var ref = createRouteMap(routes);// 遍历路由
+    var ref = createRouteMap(routes);// 遍历路由，生成名称、路径和路由的映射
     var pathList = ref.pathList;// 所有路由的完整路径列表
     var pathMap = ref.pathMap;// 完整路径的键对应的该路径的详细信息
     var nameMap = ref.nameMap;// 路由名称对应的该路径的详细信息
@@ -1490,16 +1490,16 @@
       createRouteMap(routes, pathList, pathMap, nameMap);
     }
 
-    function match (// 根据用户传参匹配路由信息
+    function match (// 根据路由路径生成路由
       raw,
       currentRoute,
       redirectedFrom
     ) {
-      var location = normalizeLocation(raw, currentRoute, false, router);// 格式化用户参数
+      var location = normalizeLocation(raw, currentRoute, false, router);// 格式化路由
       var name = location.name;
 
       if (name) {
-        var record = nameMap[name];
+        var record = nameMap[name];// 名称对应的路由配置
         {
           warn(record, ("Route with name '" + name + "' does not exist"));
         }
@@ -1526,7 +1526,7 @@
         location.params = {};
         for (var i = 0; i < pathList.length; i++) {
           var path = pathList[i];
-          var record$1 = pathMap[path];// 对应的路由配置信息
+          var record$1 = pathMap[path];// 路径对应的路由配置
           if (matchRoute(record$1.regex, location.path, location.params)) {// 跳转路径是否匹配当前路由配置信息
             return _createRoute(record$1, location, redirectedFrom)
           }
@@ -1620,7 +1620,7 @@
       return _createRoute(null, location)
     }
 /**
- * 生成当前路由信息
+ * 根据路由信息获取对应的路由
  */
     function _createRoute (
       record,
@@ -1937,13 +1937,13 @@
 
           var resolve = once(function (resolvedDef) {
             if (isESModule(resolvedDef)) {
-              resolvedDef = resolvedDef.default;
+              resolvedDef = resolvedDef.default;// 组件选项
             }
             // save resolved on async factory in case it's used elsewhere
-            def.resolved = typeof resolvedDef === 'function'
+            def.resolved = typeof resolvedDef === 'function'// 组件构造器
               ? resolvedDef
               : _Vue.extend(resolvedDef);
-            match.components[key] = resolvedDef;
+            match.components[key] = resolvedDef;// 命名视图对应的组件选项
             pending--;
             if (pending <= 0) {
               next();
@@ -1963,7 +1963,7 @@
 
           var res;
           try {
-            res = def(resolve, reject);
+            res = def(resolve, reject);// 异步组件，返回promise
           } catch (e) {
             reject(e);
           }
@@ -1990,7 +1990,7 @@
     fn
   ) {
     return flatten(matched.map(function (m) {
-      return Object.keys(m.components).map(function (key) { return fn(
+      return Object.keys(m.components).map(function (key) { return fn(// key 命名视图名称
         m.components[key],
         m.instances[key],
         m, key
@@ -2094,7 +2094,7 @@
   /*  */
 
   var History = function History (router, base) {
-    this.router = router;
+    this.router = router;// VueRouter实例
     this.base = normalizeBase(base);// 格式化基础路径
     // start with a route object that stands for "nowhere"
     this.current = START;// "/"对应的路由
@@ -2126,13 +2126,13 @@
   };
 
   History.prototype.transitionTo = function transitionTo (
-    location,// 当前页面URL对应路由的路径
+    location,// 当前URL对应路由的路径
     onComplete,
     onAbort
   ) {
       var this$1 = this;
 
-    var route = this.router.match(location, this.current);
+    var route = this.router.match(location, this.current);// 调用VueRouter实例的match方法，返回路由路径对应的路由，current当前的路由
     this.confirmTransition(
       route,
       function () {
@@ -2199,9 +2199,9 @@
       this.current.matched,
       route.matched
     );
-      var updated = ref.updated;
-      var deactivated = ref.deactivated;
-      var activated = ref.activated;
+      var updated = ref.updated;// 当前路由和即将跳转路由相同部分（组件）（更新）
+      var deactivated = ref.deactivated;// 当前路由不同部分（组件）（冻结）
+      var activated = ref.activated;// 即将跳转路由不同部分（组件）（激活）
 
     var queue = [].concat(
       // in-component leave guards
@@ -2213,7 +2213,7 @@
       // in-config enter guards
       activated.map(function (m) { return m.beforeEnter; }),
       // async components
-      resolveAsyncComponents(activated)
+      resolveAsyncComponents(activated)// 返回函数function(to, from, next)
     );
 
     this.pending = route;
@@ -2222,6 +2222,7 @@
         return abort(createNavigationCancelledError(current, route))
       }
       try {
+        // 调用钩子方法
         hook(route, current, function (to) {
           if (to === false) {
             // next(false) -> abort navigation, ensure current URL
@@ -2244,6 +2245,7 @@
             }
           } else {
             // confirm transition and pass on the value
+            // 调用下一个钩子方法
             next(to);
           }
         });
@@ -2252,19 +2254,19 @@
       }
     };
 
-    runQueue(queue, iterator, function () {
+    runQueue(queue, iterator, function () {// 调用组件leave、update等钩子函数，异步获取组件选项，创建组件构造器,最后调用这里的回调函数
       var postEnterCbs = [];
       var isValid = function () { return this$1.current === route; };
       // wait until async components are resolved before
       // extracting in-component enter guards
-      var enterGuards = extractEnterGuards(activated, postEnterCbs, isValid);
+      var enterGuards = extractEnterGuards(activated, postEnterCbs, isValid);// 异步加载组件选项中的enter钩子方法
       var queue = enterGuards.concat(this$1.router.resolveHooks);
       runQueue(queue, iterator, function () {
         if (this$1.pending !== route) {
           return abort(createNavigationCancelledError(current, route))
         }
         this$1.pending = null;
-        onComplete(route);
+        onComplete(route);// 更新路由
         if (this$1.router.app) {
           this$1.router.app.$nextTick(function () {
             postEnterCbs.forEach(function (cb) {
@@ -2285,13 +2287,13 @@
     // Default implementation is empty
   };
 
-  History.prototype.teardownListeners = function teardownListeners () {// 清除监听
+  History.prototype.teardownListeners = function teardownListeners () {// 清除事件监听
     this.listeners.forEach(function (cleanupListener) {
       cleanupListener();
     });
     this.listeners = [];
   };
-
+// 格式化基础路径（以“/”开头，不以“/”结尾）
   function normalizeBase (base) {
     if (!base) {
       if (inBrowser) {
@@ -2324,12 +2326,12 @@
       }
     }
     return {
-      updated: next.slice(0, i),// 相同的父级路由
-      activated: next.slice(i),// 不相同的路由部分
-      deactivated: current.slice(i)// 不相同的路由部分
+      updated: next.slice(0, i),// 当前路由和即将跳转的路由相同的部分
+      activated: next.slice(i),// 即将跳转的路由不相同的部分，(需要激活)
+      deactivated: current.slice(i)// 当前路由不相同的部分（需要冻结）
     }
   }
-
+// 返回组件选项中的name钩子方法（方法的this指向组件实例）
   function extractGuards (
     records,
     name,
@@ -2337,31 +2339,31 @@
     reverse
   ) {
     var guards = flatMapComponents(records, function (def, instance, match, key) {
-      var guard = extractGuard(def, name);
+      var guard = extractGuard(def, name);// 组件选项里的name钩子方法集合
       if (guard) {
-        return Array.isArray(guard)
+        return Array.isArray(guard)// 返回绑定了组件实例的钩子方法
           ? guard.map(function (guard) { return bind(guard, instance, match, key); })
           : bind(guard, instance, match, key)
       }
     });
     return flatten(reverse ? guards.reverse() : guards)
   }
-
+// 
   function extractGuard (
     def,
     key
   ) {
     if (typeof def !== 'function') {
       // extend now so that global mixins are applied.
-      def = _Vue.extend(def);
+      def = _Vue.extend(def);// 组件对应的构造器
     }
     return def.options[key]
   }
-
+// 返回组件选项的beforeRouterLeave钩子方法
   function extractLeaveGuards (deactivated) {
     return extractGuards(deactivated, 'beforeRouteLeave', bindGuard, true)
   }
-
+// 返回组件实例的beforeRouteUpdate钩子方法(方法this指向组件实例)
   function extractUpdateHooks (updated) {
     return extractGuards(updated, 'beforeRouteUpdate', bindGuard)
   }
@@ -2378,7 +2380,7 @@
     activated,
     cbs,
     isValid
-  ) {
+  ) {  
     return extractGuards(
       activated,
       'beforeRouteEnter',
@@ -2514,7 +2516,9 @@
         push ? pushState(current) : replaceState(current);
       }
     };
-
+/**
+ *  获取路由路径（不包含基础路径）
+ */
     HTML5History.prototype.getCurrentLocation = function getCurrentLocation () {
       return getLocation(this.base)
     };
@@ -2874,7 +2878,7 @@
       var setupListeners = function () {
         history.setupListeners();
       };
-      history.transitionTo(history.getCurrentLocation(), setupListeners, setupListeners);
+      history.transitionTo(history.getCurrentLocation(), setupListeners, setupListeners);// 页面跳转
     }
 
     history.listen(function (route) {
