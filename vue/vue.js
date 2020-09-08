@@ -479,7 +479,7 @@ var config = ({
 
 /*  */
 
-/**
+/**标签名称可用的字符
  * unicode letters used for parsing html tags, component names and property paths.
  * using https://www.w3.org/TR/html53/semantics-scripting.html#potentialcustomelementname
  * skipping \u10000-\uEFFFF due to it freezing up PhantomJS
@@ -5704,7 +5704,7 @@ var isReservedTag = function (tag) {
 };
 
 function getTagNamespace (tag) {
-  if (isSVG(tag)) {
+  if (isSVG(tag)) {// 是否是svg的标签
     return 'svg'
   }
   // basic support for MathML
@@ -7044,7 +7044,7 @@ function baseWarn (msg, range) {
   console.error(("[Vue compiler]: " + msg));
 }
 /* eslint-enable no-unused-vars */
-
+// 返回数组元素的key属性值，且属性值都为真值
 function pluckModuleFunction (
   modules,
   key
@@ -9385,17 +9385,17 @@ var isNonPhrasingTag = makeMap(
  */
 
 // Regular Expressions for parsing tags and attributes
-var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
-var dynamicArgAttribute = /^\s*((?:v-[\w-]+:|@|:|#)\[[^=]+\][^\s"'<>\/=]*)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
-var ncname = "[a-zA-Z_][\\-\\.0-9_a-zA-Z" + (unicodeRegExp.source) + "]*";
+var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;// 原生属性
+var dynamicArgAttribute = /^\s*((?:v-[\w-]+:|@|:|#)\[[^=]+\][^\s"'<>\/=]*)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;// 非原生属性
+var ncname = "[a-zA-Z_][\\-\\.0-9_a-zA-Z" + (unicodeRegExp.source) + "]*";// 首字符必须是字母，两个“\\”的原因是这是一个基础正则字符串，会插入到其他字符串中使用，插入时会消耗一个“\”
 var qnameCapture = "((?:" + ncname + "\\:)?" + ncname + ")";
-var startTagOpen = new RegExp(("^<" + qnameCapture));
-var startTagClose = /^\s*(\/?)>/;
-var endTag = new RegExp(("^<\\/" + qnameCapture + "[^>]*>"));
+var startTagOpen = new RegExp(("^<" + qnameCapture));// 起始标签的闭口
+var startTagClose = /^\s*(\/?)>/;// 起始标签的闭口
+var endTag = new RegExp(("^<\\/" + qnameCapture + "[^>]*>"));// 结束标签
 var doctype = /^<!DOCTYPE [^>]+>/i;
 // #7298: escape - to avoid being pased as HTML comment when inlined in page
-var comment = /^<!\--/;
-var conditionalComment = /^<!\[/;
+var comment = /^<!\--/;// 不知道为什么多了“\”
+var conditionalComment = /^<!\[/;// <![if !IE]><![endif]>除了IE以外的版本
 
 // Special Elements (can contain anything)
 var isPlainTextElement = makeMap('script,style,textarea', true);
@@ -9436,7 +9436,7 @@ function parseHTML (html, options) {
       var textEnd = html.indexOf('<');
       if (textEnd === 0) {
         // Comment:
-        if (comment.test(html)) {
+        if (comment.test(html)) {// 注释
           var commentEnd = html.indexOf('-->');
 
           if (commentEnd >= 0) {
@@ -9449,7 +9449,7 @@ function parseHTML (html, options) {
         }
 
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
-        if (conditionalComment.test(html)) {
+        if (conditionalComment.test(html)) {// 条件注释
           var conditionalEnd = html.indexOf(']>');
 
           if (conditionalEnd >= 0) {
@@ -9459,14 +9459,14 @@ function parseHTML (html, options) {
         }
 
         // Doctype:
-        var doctypeMatch = html.match(doctype);
+        var doctypeMatch = html.match(doctype);// 版本声明
         if (doctypeMatch) {
           advance(doctypeMatch[0].length);
           continue
         }
 
         // End tag:
-        var endTagMatch = html.match(endTag);
+        var endTagMatch = html.match(endTag);// 结束标签
         if (endTagMatch) {
           var curIndex = index;
           advance(endTagMatch[0].length);
@@ -9475,7 +9475,7 @@ function parseHTML (html, options) {
         }
 
         // Start tag:
-        var startTagMatch = parseStartTag();
+        var startTagMatch = parseStartTag();// 起始标签
         if (startTagMatch) {
           handleStartTag(startTagMatch);
           if (shouldIgnoreFirstNewline(startTagMatch.tagName, html)) {
@@ -9565,14 +9565,14 @@ function parseHTML (html, options) {
       };
       advance(start[0].length);
       var end, attr;
-      while (!(end = html.match(startTagClose)) && (attr = html.match(dynamicArgAttribute) || html.match(attribute))) {
+      while (!(end = html.match(startTagClose)) && (attr = html.match(dynamicArgAttribute) || html.match(attribute))) {// 找到标签属性和起始标签开口
         attr.start = index;
         advance(attr[0].length);
         attr.end = index;
         match.attrs.push(attr);
       }
       if (end) {
-        match.unarySlash = end[1];
+        match.unarySlash = end[1];// 单标签<img />
         advance(end[0].length);
         match.end = index;
         return match
@@ -9728,7 +9728,7 @@ function createASTElement (
 }
 
 /**
- * Convert HTML string to AST.抽象语法树
+ * Convert HTML string to AST(抽象语法树)-模板解析
  */
 function parse (
   template,
