@@ -9357,13 +9357,13 @@ var he = {
   }
 };
 
-/*  */
+/* 没有内容的标签 */
 
 var isUnaryTag = makeMap(
   'area,base,br,col,embed,frame,hr,img,input,isindex,keygen,' +
   'link,meta,param,source,track,wbr'
 );
-
+// 不需要结束标签的标签
 // Elements that you can, intentionally, leave open
 // (and which close themselves)
 var canBeLeftOpenTag = makeMap(
@@ -9372,7 +9372,7 @@ var canBeLeftOpenTag = makeMap(
 
 // HTML5 tags https://html.spec.whatwg.org/multipage/indices.html#elements-3
 // Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
-var isNonPhrasingTag = makeMap(
+var isNonPhrasingTag = makeMap(// 不是语句型的元素   
   'address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
   'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
   'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
@@ -9414,7 +9414,7 @@ var encodedAttr = /&(?:lt|gt|quot|amp|#39);/g;
 var encodedAttrWithNewLines = /&(?:lt|gt|quot|amp|#39|#10|#9);/g;
 
 // #5992
-var isIgnoreNewlineTag = makeMap('pre,textarea', true);
+var isIgnoreNewlineTag = makeMap('pre,textarea', true);// 可以忽略换行的标签
 var shouldIgnoreFirstNewline = function (tag, html) { return tag && isIgnoreNewlineTag(tag) && html[0] === '\n'; };
 
 function decodeAttr (value, shouldDecodeNewlines) {
@@ -9423,20 +9423,20 @@ function decodeAttr (value, shouldDecodeNewlines) {
 }
 
 function parseHTML (html, options) {
-  var stack = [];
+  var stack = [];// 保存正在解析的标签信息，当标签解析完成时（结束标签已解析）从该数组移除
   var expectHTML = options.expectHTML;
   var isUnaryTag$$1 = options.isUnaryTag || no;
   var canBeLeftOpenTag$$1 = options.canBeLeftOpenTag || no;
-  var index = 0;
+  var index = 0;// 将要解析字符串的起始位置
   var last, lastTag;
-  while (html) {
+  while (html) {// html未解析的部分
     last = html;
     // Make sure we're not in a plaintext content element like script/style
-    if (!lastTag || !isPlainTextElement(lastTag)) {
+    if (!lastTag || !isPlainTextElement(lastTag)) {// lastTag非空且不是文本内容标签，或者lastTag为空
       var textEnd = html.indexOf('<');
-      if (textEnd === 0) {
+      if (textEnd === 0) { // 解析到标签部分
         // Comment:
-        if (comment.test(html)) {
+        if (comment.test(html)) {// 注释标签
           var commentEnd = html.indexOf('-->');
 
           if (commentEnd >= 0) {
@@ -9475,7 +9475,7 @@ function parseHTML (html, options) {
         }
 
         // Start tag:
-        var startTagMatch = parseStartTag();
+        var startTagMatch = parseStartTag();// 匹配开始标签，获取标签中的属性、自闭合“/”、在字符串中的起始位置和结束位置
         if (startTagMatch) {
           handleStartTag(startTagMatch);
           if (shouldIgnoreFirstNewline(startTagMatch.tagName, html)) {
@@ -9488,7 +9488,7 @@ function parseHTML (html, options) {
       var text = (void 0), rest = (void 0), next = (void 0);
       if (textEnd >= 0) {
         rest = html.slice(textEnd);
-        while (
+        while (// 当是结束标签，或者标签开口，或者注释标签，或者条件注释标签则结束循环
           !endTag.test(rest) &&
           !startTagOpen.test(rest) &&
           !comment.test(rest) &&
@@ -9549,7 +9549,7 @@ function parseHTML (html, options) {
 
   // Clean up any remaining tags
   parseEndTag();
-  // 从n开始截取字符串
+  // 更新解析索引指向未解析的起始，并去除已解析的字符串
   function advance (n) {
     index += n;
     html = html.substring(n);
@@ -9642,7 +9642,7 @@ function parseHTML (html, options) {
     }
 
     if (pos >= 0) {
-      // Close all the open elements, up the stack
+      // Close all the open elements, up the stack关闭没有结束标签的标签
       for (var i = stack.length - 1; i >= pos; i--) {
         if (process.env.NODE_ENV !== 'production' &&
           (i > pos || !tagName) &&
@@ -9748,10 +9748,10 @@ function parse (
 
   delimiters = options.delimiters;
 
-  var stack = [];
+  var stack = [];// 通过栈结构保存解析过程中的标签信息，
   var preserveWhitespace = options.preserveWhitespace !== false;
   var whitespaceOption = options.whitespace;
-  var root;
+  var root;// 根标签
   var currentParent;
   var inVPre = false;
   var inPre = false;
@@ -9862,9 +9862,9 @@ function parse (
     canBeLeftOpenTag: options.canBeLeftOpenTag,
     shouldDecodeNewlines: options.shouldDecodeNewlines,
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
-    shouldKeepComment: options.comments,
+    shouldKeepComment: options.comments,// 是否保留注释
     outputSourceRange: options.outputSourceRange,
-    start: function start (tag, attrs, unary, start$1, end) {
+    start: function start (tag, attrs, unary, start$1, end) {// 格式起始标签，添加到语法树中
       // check namespace.
       // inherit parent ns if there is one
       var ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag);
@@ -9920,7 +9920,7 @@ function parse (
 
       if (!inVPre) {
         processPre(element);
-        if (element.pre) {
+        if (element.pre) {// 不需要编译解节点以及子节点
           inVPre = true;
         }
       }
@@ -9951,18 +9951,18 @@ function parse (
       }
     },
 
-    end: function end (tag, start, end$1) {
-      var element = stack[stack.length - 1];
+    end: function end (tag, start, end$1) {// 处理结束标签
+      var element = stack[stack.length - 1];// 当前结束标签最近的开始标签
       // pop stack
       stack.length -= 1;
-      currentParent = stack[stack.length - 1];
+      currentParent = stack[stack.length - 1];// 当前标签全部解析完成，设置当前解析的parent标签为上一级标签
       if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
         element.end = end$1;
       }
       closeElement(element);
     },
 
-    chars: function chars (text, start, end) {
+    chars: function chars (text, start, end) {// 格式字符串（内容部分，非标签部分）
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
           if (text === template) {
@@ -9988,7 +9988,7 @@ function parse (
         return
       }
       var children = currentParent.children;
-      if (inPre || text.trim()) {
+      if (inPre || text.trim()) {// 空白字符都转化成空字符串
         text = isTextTag(currentParent) ? text : decodeHTMLCached(text);
       } else if (!children.length) {
         // remove the whitespace-only node right after an opening tag
@@ -10033,7 +10033,7 @@ function parse (
         }
       }
     },
-    comment: function comment (text, start, end) {
+    comment: function comment (text, start, end) {// 将注释节点添加到语法树中
       // adding anyting as a sibling to the root node is forbidden
       // comments should still be allowed, but ignored
       if (currentParent) {
@@ -10054,7 +10054,7 @@ function parse (
 }
 
 function processPre (el) {
-  if (getAndRemoveAttr(el, 'v-pre') != null) {
+  if (getAndRemoveAttr(el, 'v-pre') != null) {// 是否有v-pre属性
     el.pre = true;
   }
 }
