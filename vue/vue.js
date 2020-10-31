@@ -155,7 +155,7 @@ function hasOwn (obj, key) {
 
 /**
  * Create a cached version of a pure function.
- * 数据缓存，数据存在直接返回，否则执行函数，缓存函数返回值（缓存函数处理结果）
+ * 用于缓存计算结果，fn是计算方法，
  */
 function cached (fn) {
   var cache = Object.create(null);
@@ -10759,10 +10759,10 @@ var genStaticKeysCached = cached(genStaticKeys$1);
  */
 function optimize (root, options) {
   if (!root) { return }
-  isStaticKey = genStaticKeysCached(options.staticKeys || '');
+  isStaticKey = genStaticKeysCached(options.staticKeys || '');// 用于判断是否是静态的属性
   isPlatformReservedTag = options.isReservedTag || no;
   // first pass: mark all non-static nodes.
-  markStatic$1(root);
+  markStatic$1(root);// 设置节点静态标记
   // second pass: mark static roots.
   markStaticRoots(root, false);
 }
@@ -10775,7 +10775,7 @@ function genStaticKeys$1 (keys) {
 }
 
 function markStatic$1 (node) {
-  node.static = isStatic(node);
+  node.static = isStatic(node);// 根据节点自身的属性判断是否是静态的
   if (node.type === 1) {
     // do not make component slot content static. this avoids
     // 1. components not able to mutate slot nodes
@@ -10790,7 +10790,7 @@ function markStatic$1 (node) {
     for (var i = 0, l = node.children.length; i < l; i++) {
       var child = node.children[i];
       markStatic$1(child);
-      if (!child.static) {
+      if (!child.static) {// 如果某个子节点不是静态属性，则父节点就不是静态属性
         node.static = false;
       }
     }
@@ -10806,8 +10806,8 @@ function markStatic$1 (node) {
   }
 }
 
-function markStaticRoots (node, isInFor) {
-  if (node.type === 1) {
+function markStaticRoots (node, isInFor) {// 向下遍历树，找到每个分支的静态根节点
+  if (node.type === 1) {// 标签节点
     if (node.static || node.once) {
       node.staticInFor = isInFor;
     }
@@ -10815,7 +10815,7 @@ function markStaticRoots (node, isInFor) {
     // are not just static text. Otherwise the cost of hoisting out will
     // outweigh the benefits and it's better off to just always render it fresh.
     if (node.static && node.children.length && !(
-      node.children.length === 1 &&
+      node.children.length === 1 &&// 1.静态节点（子节点都是静态节点），2. 包含子节点，3. 但又不是只有一个文本子节点
       node.children[0].type === 3
     )) {
       node.staticRoot = true;
@@ -10846,13 +10846,13 @@ function isStatic (node) {
   return !!(node.pre || (
     !node.hasBindings && // no dynamic bindings
     !node.if && !node.for && // not v-if or v-for or v-else
-    !isBuiltInTag(node.tag) && // not a built-in
-    isPlatformReservedTag(node.tag) && // not a component
-    !isDirectChildOfTemplateFor(node) &&
-    Object.keys(node).every(isStaticKey)
+    !isBuiltInTag(node.tag) && // not a built-in 不是内建组件slot，component
+    isPlatformReservedTag(node.tag) && // not a component 是原生标签
+    !isDirectChildOfTemplateFor(node) &&// 不是有for指令的template标签的子标签
+    Object.keys(node).every(isStaticKey)// 节点上的每个属性都是静态属性
   ))
 }
-
+// 是不是有for指令的template标签的子标签
 function isDirectChildOfTemplateFor (node) {
   while (node.parent) {
     node = node.parent;
@@ -11782,10 +11782,14 @@ function createFunction (code, errors) {
     return noop
   }
 }
-
+/**
+ * 基于模板字符串缓存模板解析结果
+ */
 function createCompileToFunctionFn (compile) {
   var cache = Object.create(null);// 缓存函数调用结果
-
+/**
+ * 根据编译结果生成渲染函数
+ */
   return function compileToFunctions (
     template,
     options,
@@ -11964,9 +11968,9 @@ var createCompiler = createCompilerCreator(function baseCompile (
   template,
   options
 ) {
-  var ast = parse(template.trim(), options);
+  var ast = parse(template.trim(), options);// 生成语法树
   if (options.optimize !== false) {
-    optimize(ast, options);
+    optimize(ast, options);// 标记语法树上的静态节点
   }
   var code = generate(ast, options);
   return {
