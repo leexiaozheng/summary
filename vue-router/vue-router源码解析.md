@@ -1,10 +1,10 @@
 ### 安装
 
-1. 添加全局的 beforeCreate、destroyed 生命周期方法；Vue.prototype 上添加$route和$router 属性；注册 router-view 和 router-link 组件；添加新的生命周期 beforeRouteEnter、beforeRouteLeave、beforeRouteUpdate；
+1. 添加全局的 beforeCreate、destroyed 生命周期方法；Vue.prototype 上添加`$route`和`$router` 属性；注册 router-view 和 router-link 组件；添加新的生命周期 beforeRouteEnter、beforeRouteLeave、beforeRouteUpdate；
 
 2. beforeCreate 周期中，将路由 VueRouter 实例 router 添加根组件（包含 VueRouter 实例选项的组件）上，同时添加路由信息\_route 属性到根组件上，设置该属性响应式。子组件\_routerRoot 属性指向该根组件。
 
-3. Vue.prototy 上的$router和$route 属性值也是来自于根组件的 router 和\_route。
+3. Vue.prototy 上的`$router`和`$route` 属性值也是来自于根组件的 router 和\_route。
 
 > 根组件的 beforeCreate 周期中调用了 VueRouter 实例的 init 方法进行初始化。
 
@@ -129,7 +129,7 @@ var VueRouter = function VueRouter(options) {
 
 1. props 的 name 属性匹配对应的路由命名视图。
 
-2. 调用 render 函数，渲染当前路由对应的组件。通过 parent.\$route 读取当前的路由信息,然后向上查找，根据 routerView 路由组件标识 routerView，获取当前的路由层级。根据路由层级和命名视图的名称获取对应的组件选项，根据组件选项生成对应的节点（VNode 实例）返回。
+2. 调用 render 函数，渲染当前路由对应的组件。通过 `parent.$route` 读取当前的路由信息,然后向上查找，根据 routerView 路由组件标识 routerView，获取当前的路由层级。根据路由层级和命名视图的名称获取对应的组件选项，根据组件选项生成对应的节点（VNode 实例）返回。
 
 ```javascript
 var View = {
@@ -513,7 +513,7 @@ var HTML5History = /*@__PURE__*/ (function (History) {
 
 ### 页面跳转
 
-1. 路由跳转时先根据当前路由和跳转路由对应的组件，分别提取出需要更新，需要冻结，需要激活的组件。然后依次调用组件上路由相关的生命周期钩子函数，包括加载异步组件。
+1. 路由跳转时先根据当前路由和跳转路由对应的组件，分别提取出需要更新，需要冻结（隐藏或移除），需要激活（创建或显示）的组件。然后依次调用组件上路由相关的生命周期钩子函数，包括加载异步组件。
 
 2. 调用路由生命周期钩子函数后，更新当前的路由数据。
 
