@@ -1,0 +1,3 @@
+1. 服务端生成sessionID，添加到cookie当中。客户端发送请求时携带cookie，服务端收到请求后获取cookie中的sessionID，查询该sessionID是否已存在。如果已存在，可以直接使用此session；如果没有，则会新建一个。
+
+2. cookie的Expires属性：设置Cookie的生存期。有两种存储类型的Cookie：会话性与持久性。Expires属性缺省时，为会话性Cookie，仅保存在客户端内存中，并在用户关闭浏览器时失效；持久性Cookie会保存在用户的硬盘中，直至生存期到或用户直接在网页中单击“注销”等按钮结束会话时才会失效。
